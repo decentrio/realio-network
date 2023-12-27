@@ -28,6 +28,10 @@ const (
 	DisplayDenom = "rio"
 	// BaseDenom defines to the default denomination used in Realio Network (staking, EVM, governance, etc.)
 	BaseDenom = "ario"
+	// GovDenom defines to the governance denomination used in Realio Network (staking, EVM, governance, etc.)
+	GovDenom = "arst"
+	// BondeDenom defines to list default denominations used in Realio Network
+	BondDenom = "ario,arst"
 )
 
 // SetBech32Prefixes sets the global prefixes to be used when serializing addresses and public keys to Bech32 strings.

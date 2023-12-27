@@ -295,6 +295,7 @@ func initTestnetFiles(
 		accStakingTokens := sdk.TokensFromConsensusPower(5000, ethermint.PowerReduction)
 		coins := sdk.Coins{
 			sdk.NewCoin(cmdcfg.BaseDenom, accStakingTokens),
+			sdk.NewCoin(cmdcfg.GovDenom, accStakingTokens),
 		}
 
 		genBalances = append(genBalances, banktypes.Balance{Address: addr.String(), Coins: coins.Sort()})
@@ -304,10 +305,14 @@ func initTestnetFiles(
 		})
 
 		valTokens := sdk.TokensFromConsensusPower(100, ethermint.PowerReduction)
+		valCoin := sdk.NewCoin(cmdcfg.BaseDenom, valTokens)
+		if i%2 == 1 {
+			valCoin = sdk.NewCoin(cmdcfg.GovDenom, valTokens)
+		} 
 		createValMsg, err := stakingtypes.NewMsgCreateValidator(
 			sdk.ValAddress(addr),
 			valPubKeys[i],
-			sdk.NewCoin(cmdcfg.BaseDenom, valTokens),
+			valCoin,
 			stakingtypes.NewDescription(nodeDirName, "", "", "", ""),
 			stakingtypes.NewCommissionRates(sdk.OneDec(), sdk.OneDec(), sdk.OneDec()),
 			sdk.OneInt(),
@@ -379,7 +384,7 @@ func initGenFiles(
 	genBalances []banktypes.Balance,
 	genFiles []string,
 	numValidators int,
-) error {
+) error {	
 	appGenState := mbm.DefaultGenesis(clientCtx.Codec)
 	// set the accounts in the genesis state
 	var authGenState authtypes.GenesisState
@@ -403,7 +408,7 @@ func initGenFiles(
 	var stakingGenState stakingtypes.GenesisState
 	clientCtx.Codec.MustUnmarshalJSON(appGenState[stakingtypes.ModuleName], &stakingGenState)
 
-	stakingGenState.Params.BondDenom = coinDenom
+	stakingGenState.Params.BondDenom = cmdcfg.BondDenom
 	appGenState[stakingtypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(&stakingGenState)
 
 	mintGenState := *minttypes.DefaultGenesisState()
