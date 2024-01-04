@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	minttypes "github.com/realiotech/realio-network/x/mint/types"
 
@@ -230,8 +231,9 @@ func initTestnetFiles(
 		genBalances []banktypes.Balance
 		genFiles    []string
 	)
-
+	info := map[string]string{}
 	inBuf := bufio.NewReader(cmd.InOrStdin())
+
 	// generate private keys, node IDs, and initial transactions
 	for i := 0; i < args.numValidators; i++ {
 		nodeDirName := fmt.Sprintf("%s%d", args.nodeDirPrefix, i)
@@ -274,23 +276,13 @@ func initTestnetFiles(
 			return err
 		}
 
-		addr, secret, err := testutil.GenerateSaveCoinKey(kb, nodeDirName, "", true, algo)
+		valName := "val" + strconv.Itoa(i)
+		addr, secret, err := testutil.GenerateSaveCoinKey(kb, valName, "", true, algo)
 		if err != nil {
 			_ = os.RemoveAll(args.outputDir)
 			return err
 		}
-
-		info := map[string]string{"secret": secret}
-
-		cliPrint, err := json.Marshal(info)
-		if err != nil {
-			return err
-		}
-
-		// save private key seed words
-		if err := network.WriteFile(fmt.Sprintf("%v.json", "key_seed"), nodeDir, cliPrint); err != nil {
-			return err
-		}
+		info[valName] = secret
 
 		accStakingTokens := sdk.TokensFromConsensusPower(5000, ethermint.PowerReduction)
 		coins := sdk.Coins{
@@ -308,7 +300,28 @@ func initTestnetFiles(
 		valCoin := sdk.NewCoin(cmdcfg.BaseDenom, valTokens)
 		if i%2 == 1 {
 			valCoin = sdk.NewCoin(cmdcfg.GovDenom, valTokens)
-		} 
+		}
+
+		userName := "user" + strconv.Itoa(i)
+		userAddr, userSecret, err := testutil.GenerateSaveCoinKey(kb, userName, "", true, algo)
+		if err != nil {
+			_ = os.RemoveAll(args.outputDir)
+			return err
+		}
+
+		info[userName] = userSecret
+		userTokens := sdk.TokensFromConsensusPower(10000, ethermint.PowerReduction)
+		userCoins := sdk.Coins{
+			sdk.NewCoin(cmdcfg.BaseDenom, userTokens),
+			sdk.NewCoin(cmdcfg.GovDenom, userTokens),
+		}
+
+		genBalances = append(genBalances, banktypes.Balance{Address: userAddr.String(), Coins: userCoins.Sort()})
+		genAccounts = append(genAccounts, &ethermint.EthAccount{
+			BaseAccount: authtypes.NewBaseAccount(userAddr, nil, 0, 0),
+			CodeHash:    common.BytesToHash(evmtypes.EmptyCodeHash).Hex(),
+		})
+
 		createValMsg, err := stakingtypes.NewMsgCreateValidator(
 			sdk.ValAddress(addr),
 			valPubKeys[i],
@@ -335,7 +348,7 @@ func initTestnetFiles(
 			WithKeybase(kb).
 			WithTxConfig(clientCtx.TxConfig)
 
-		if err := tx.Sign(txFactory, nodeDirName, txBuilder, true); err != nil {
+		if err := tx.Sign(txFactory, valName, txBuilder, true); err != nil {
 			return err
 		}
 
@@ -357,6 +370,21 @@ func initTestnetFiles(
 		}
 
 		srvconfig.WriteConfigFile(filepath.Join(nodeDir, "config/app.toml"), appConfig)
+	}
+
+	for i := 0; i < args.numValidators; i++ {
+		nodeDirName := fmt.Sprintf("%s%d", args.nodeDirPrefix, i)
+		nodeDir := filepath.Join(args.outputDir, nodeDirName, args.nodeDaemonHome)
+
+		cliPrint, err := json.Marshal(info)
+		if err != nil {
+			return err
+		}
+
+		// save private key seed words
+		if err := network.WriteFile(fmt.Sprintf("%v.json", "key_seed"), nodeDir, cliPrint); err != nil {
+			return err
+		}
 	}
 
 	if err := initGenFiles(clientCtx, mbm, args.chainID, cmdcfg.BaseDenom, genAccounts, genBalances, genFiles, args.numValidators); err != nil {

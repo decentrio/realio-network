@@ -3,7 +3,7 @@ FROM golang:1.20-bullseye as build-env
 # Install minimum necessary dependencies
 ENV PACKAGES curl make git libc-dev bash gcc
 RUN apt-get update && apt-get upgrade -y && \
-    apt-get install -y $PACKAGES
+    apt-get install -y $PACKAGES && rm -rf /var/lib/apt/lists/*
 
 # Set working directory for the build
 WORKDIR /go/src/github.com/realiotech/realio-network
@@ -19,7 +19,9 @@ FROM golang:1.20-bullseye as final
 
 WORKDIR /
 
-RUN apt-get update
+RUN apt-get update && apt-get upgrade -y && \
+    apt-get install -y jq && apt-get update && \
+    rm -rf /var/lib/apt/lists/*
 
 # Copy over binaries from the build-env
 COPY --from=build-env /go/src/github.com/realiotech/realio-network/build/realio-networkd /
