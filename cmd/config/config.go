@@ -28,8 +28,6 @@ const (
 	DisplayDenom = "rio"
 	// BaseDenom defines to the default denomination used in Realio Network (staking, EVM, governance, etc.)
 	BaseDenom = "ario"
-	// DisplayDeDisplayGovDenomnom defines the governance denomination displayed to users in client applications.
-	DisplayGovDenom = "rst"
 	// GovDenom defines to the governance denomination used in Realio Network (staking, EVM, governance, etc.)
 	GovDenom = "arst"
 	// BondeDenom defines to list default denominations used in Realio Network
@@ -57,14 +55,6 @@ func RegisterDenoms() {
 	}
 
 	if err := sdk.RegisterDenom(BaseDenom, sdk.NewDecWithPrec(1, ethermint.BaseDenomUnit)); err != nil {
-		panic(err)
-	}
-
-	if err := sdk.RegisterDenom(DisplayGovDenom, sdk.OneDec()); err != nil {
-		panic(err)
-	}
-
-	if err := sdk.RegisterDenom(GovDenom, sdk.NewDecWithPrec(1, ethermint.BaseDenomUnit)); err != nil {
 		panic(err)
 	}
 }
