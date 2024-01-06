@@ -231,7 +231,7 @@ func initTestnetFiles(
 		genBalances []banktypes.Balance
 		genFiles    []string
 	)
-	info := map[string]string{}
+	info := map[string]string{"chainId": args.chainID}
 	inBuf := bufio.NewReader(cmd.InOrStdin())
 
 	// generate private keys, node IDs, and initial transactions

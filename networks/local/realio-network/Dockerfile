@@ -26,7 +26,9 @@ RUN apt-get update && apt-get upgrade -y && \
 # Copy over binaries from the build-env
 COPY --from=build-env /go/src/github.com/realiotech/realio-network/build/realio-networkd /
 COPY --from=build-env /go/src/github.com/realiotech/realio-network/scripts/start-docker.sh /
+COPY --from=build-env /go/src/github.com/realiotech/realio-network/scripts/localnet-txs.sh /
 
+RUN chmod +x ./localnet-txs.sh
 EXPOSE 26656 26657 1317 9090 8545 8546
 
 # Run realio-networkd by default, omit entrypoint to ease using container with realio-networkd
