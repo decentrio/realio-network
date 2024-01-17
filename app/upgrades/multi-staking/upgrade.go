@@ -5,27 +5,31 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/client/flags"
+	// "github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
+	"github.com/cosmos/cosmos-sdk/store/prefix"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
+
+	// genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
+
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	multistaking "github.com/realio-tech/multi-staking-module/x/multi-staking"
+
+	// multistaking "github.com/realio-tech/multi-staking-module/x/multi-staking"
 	minttypes "github.com/realiotech/realio-network/x/mint/types"
 
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
+	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	multistakingkeeper "github.com/realio-tech/multi-staking-module/x/multi-staking/keeper"
 
 	"cosmossdk.io/math"
 	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
 	"github.com/realiotech/realio-network/app/upgrades/multi-staking/legacy"
-	"github.com/spf13/cast"
+	// "github.com/spf13/cast"
 )
 
 var (
@@ -43,34 +47,47 @@ func CreateUpgradeHandler(
 	cdc codec.Codec,
 	bk bankkeeper.Keeper,
 	msk multistakingkeeper.Keeper,
-	dk distrkeeper.Keeper,
+	sk stakingkeeper.Keeper,
 	keys map[string]*storetypes.KVStoreKey,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, plan upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx.Logger().Info("Starting upgrade for multi staking...")
 
-		nodeHome := cast.ToString(appOpts.Get(flags.FlagHome))
-		upgradeGenFile := nodeHome + "/config/state.json"
-		appState, _, err := genutiltypes.GenesisStateFromGenFile(upgradeGenFile)
-		if err != nil {
-			panic(err)
-		}
+		// nodeHome := cast.ToString(appOpts.Get(flags.FlagHome))
+		// upgradeGenFile := nodeHome + "/config/state.json"
+		// appState, _, err := genutiltypes.GenesisStateFromGenFile(upgradeGenFile)
+		// if err != nil {
+		// 	panic(err)
+		// }
 		// migrate bank
 		migrateBank(ctx, bk)
+		stakingStoreKey := keys[stakingtypes.ModuleName]
+		store := ctx.KVStore(stakingStoreKey)
+		prefixStore := prefix.NewStore(store, stakingtypes.ValidatorsKey)
+		iterator := sdk.KVStorePrefixIterator(prefixStore, nil)
+		defer iterator.Close()
+
+		for ; iterator.Valid(); iterator.Next() {
+			var oldValidator legacy.Validator
+			err := cdc.Unmarshal(iterator.Value(), &oldValidator)
+			if err != nil {
+				panic(err)
+			}
+		}
 
 		// migrate multistaking
-		appState, err = migrateMultiStaking(appState)
+		// appState, err = migrateMultiStaking(appState)
 
-		fmt.Println()
-		fmt.Println("=============UpgradeHandler=============")
-		fmt.Printf("%s", appState[multistakingtypes.ModuleName])
-		fmt.Println("=============UpgradeHandler=============")
+		// fmt.Println()
+		// fmt.Println("=============UpgradeHandler=============")
+		// fmt.Printf("%s", appState[multistakingtypes.ModuleName])
+		// fmt.Println("=============UpgradeHandler=============")
 
-		if err != nil {
-			panic(err)
-		}
-		vm[multistakingtypes.ModuleName] = multistaking.AppModule{}.ConsensusVersion()
-		mm.Modules[multistakingtypes.ModuleName].InitGenesis(ctx, cdc, appState[multistakingtypes.ModuleName])
+		// if err != nil {
+		// 	panic(err)
+		// }
+		// vm[multistakingtypes.ModuleName] = multistaking.AppModule{}.ConsensusVersion()
+		// mm.Modules[multistakingtypes.ModuleName].InitGenesis(ctx, cdc, appState[multistakingtypes.ModuleName])
 
 		return mm.RunMigrations(ctx, configurator, vm)
 	}
