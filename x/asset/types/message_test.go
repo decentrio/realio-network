@@ -75,36 +75,6 @@ func (suite *MessageTestSuite) TestMsgCreateToken_ValidateBasic() {
 	}
 }
 
-func (suite *MessageTestSuite) TestMsgTransferToken_ValidateBasic() {
-	tests := []struct {
-		name string
-		msg  MsgTransferToken
-		err  error
-	}{
-		{
-			name: "invalid address",
-			msg: MsgTransferToken{
-				From: "invalid_address",
-			},
-			err: sdkerrors.ErrInvalidAddress,
-		}, {
-			name: "valid address",
-			msg: MsgTransferToken{
-				To:   testutil.GenAddress().String(),
-				From: testutil.GenAddress().String(),
-			},
-		},
-	}
-	for _, tt := range tests {
-		err := tt.msg.ValidateBasic()
-		if tt.err != nil {
-			suite.Require().ErrorIs(err, tt.err)
-			return
-		}
-		suite.Require().NoError(err)
-	}
-}
-
 func (suite *MessageTestSuite) TestMsgUnAuthorizeAddress_ValidateBasic() {
 	tests := []struct {
 		name string
