@@ -38,14 +38,8 @@ func (k msgServer) AuthorizeAddress(goCtx context.Context, msg *types.MsgAuthori
 		return nil, errorsmod.Wrapf(sdkerrors.ErrKeyNotFound, "symbol %s does not exists", msg.Symbol)
 	}
 
-	// Checks if the token manager signed
-	signers := msg.GetSigners()
-	if len(signers) != 1 {
-		return nil, errorsmod.Wrap(sdkerrors.ErrUnauthorized, "invalid signers")
-	}
-
 	// assert that the manager account is the only signer of the message
-	if signers[0].String() != token.Manager {
+	if msg.Manager != token.Manager {
 		return nil, errorsmod.Wrap(sdkerrors.ErrUnauthorized, "caller not authorized")
 	}
 
@@ -77,14 +71,8 @@ func (k msgServer) UnAuthorizeAddress(goCtx context.Context, msg *types.MsgUnAut
 		return nil, errorsmod.Wrapf(sdkerrors.ErrKeyNotFound, "symbol %s does not exists", msg.Symbol)
 	}
 
-	// Checks if the token manager signed
-	signers := msg.GetSigners()
-	if len(signers) != 1 {
-		return nil, errorsmod.Wrap(sdkerrors.ErrUnauthorized, "invalid signers")
-	}
-
 	// assert that the manager account is the only signer of the message
-	if signers[0].String() != token.Manager {
+	if msg.Manager != token.Manager {
 		return nil, errorsmod.Wrap(sdkerrors.ErrUnauthorized, "caller not authorized")
 	}
 
@@ -177,14 +165,8 @@ func (k msgServer) UpdateToken(goCtx context.Context, msg *types.MsgUpdateToken)
 		return nil, errorsmod.Wrapf(sdkerrors.ErrKeyNotFound, "symbol %s does not exists", msg.Symbol)
 	}
 
-	// Checks if the token manager signed
-	signers := msg.GetSigners()
-	if len(signers) != 1 {
-		return nil, errorsmod.Wrap(sdkerrors.ErrUnauthorized, "invalid signers")
-	}
-
 	// assert that the manager account is the only signer of the message
-	if signers[0].String() != existing.Manager {
+	if msg.Manager != existing.Manager {
 		return nil, errorsmod.Wrap(sdkerrors.ErrUnauthorized, "caller not authorized")
 	}
 
