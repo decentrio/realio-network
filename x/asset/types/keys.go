@@ -26,6 +26,26 @@ const (
 	TokenKeyPrefix = "Token/value/"
 )
 
+var (
+	AssetKeyPrefix           = []byte{1}
+	FreezingAccountKeyPrefix = []byte{2}
+	HolderAccountKeyPrefix   = []byte{3}
+	ApprovalAccountKeyPrefix = []byte{4}
+)
+
+func GetFreezingAccountKeyPrefix(assetName string) []byte {
+	return append(FreezingAccountKeyPrefix, []byte(assetName)...)
+}
+
+func GetHolderAccountKeyPrefix(assetName string) []byte {
+	return append(HolderAccountKeyPrefix, []byte(assetName)...)
+}
+
+func GetApprovalAccountKeyPrefix(assetName string) []byte {
+	return append(ApprovalAccountKeyPrefix, []byte(assetName)...)
+}
+
+// Old store for token
 // PortKey defines the key to store the port ID in store
 var PortKey = KeyPrefix("asset-port-")
 

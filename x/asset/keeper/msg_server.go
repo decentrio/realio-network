@@ -29,6 +29,18 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 
 var _ types.MsgServer = msgServer{}
 
+func (k msgServer) CreateAsset(goCtx context.Context, msg *types.MsgCreateAsset) (*types.MsgCreateAssetResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	// Check if creater allowed
+	// Check if asset name allowed
+	assetName, err := k.validateAsset(ctx, msg.Creator, msg.AssetSubname)
+	if err != nil {
+		return nil, err
+	}
+	// Create asset
+
+}
+
 func (k msgServer) AuthorizeAddress(goCtx context.Context, msg *types.MsgAuthorizeAddress) (*types.MsgAuthorizeAddressResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
