@@ -216,8 +216,8 @@ github.com/ChainSafe/go-schnorrkel v0.0.0-20200405005733-88cbf1b4c40d/go.mod h1:
 github.com/DATA-DOG/go-sqlmock v1.3.3/go.mod h1:f/Ixk793poVmq4qj/V1dPUg2JEAKC73Q5eFN3EC/SaM=
 github.com/DataDog/datadog-go v3.2.0+incompatible/go.mod h1:LButxg5PwREeZtORoXG3tL4fMGNddJ+vMq1mwgfaqoQ=
 github.com/DataDog/zstd v1.5.0/go.mod h1:g4AWEaM3yOg3HYfnJ3YIawPnVdXJh9QME85blwSAmyw=
-github.com/GNaD13/ethermint v0.0.0-20240510094548-ca0e00b80f47 h1:UVbl7zvKkFgcUQtGJ/VmV4xWtX3w+uBbaUIS+Mn9Xhw=
-github.com/GNaD13/ethermint v0.0.0-20240510094548-ca0e00b80f47/go.mod h1:0c+GK/UxT/wykI8InX9U1Pmnj1M4wPRMgJtibd/RnqI=
+github.com/GNaD13/ethermint v0.0.0-20240510100345-3532ddff8852 h1:y95h2WrN9nCQLb30OXRT0cZlunqjcQn70SQ1i+KFAyA=
+github.com/GNaD13/ethermint v0.0.0-20240510100345-3532ddff8852/go.mod h1:0c+GK/UxT/wykI8InX9U1Pmnj1M4wPRMgJtibd/RnqI=
 github.com/Knetic/govaluate v3.0.1-0.20171022003610-9aa49832a739+incompatible/go.mod h1:r7JcOSlj0wfOMncg0iLm8Leh48TZaKVeNIfJntJ2wa0=
 github.com/Microsoft/go-winio v0.6.0 h1:slsWYD/zyx7lCXoZVlvQrj0hPTM1HI4+v1sIda2yDvg=
 github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5 h1:TngWCqHvy9oXAN6lEVMRuU21PR1EtLVZJmdB18Gu3Rw=
