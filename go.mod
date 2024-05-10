@@ -193,7 +193,7 @@ replace (
 	// use Realio sdk v0.46.11-realio-4
 	github.com/cosmos/cosmos-sdk => github.com/realiotech/cosmos-sdk v0.46.11-realio-4
 	// temporary fork of ethermint while evmos upgrades
-	github.com/evmos/ethermint => github.com/realiotech/ethermint v0.21.0-realio-1
+	github.com/evmos/ethermint => github.com/GNaD13/ethermint v0.0.0-20240510094548-ca0e00b80f47
 	// use cosmos flavored protobufs
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 	// Informal Tendermint fork
