@@ -201,7 +201,7 @@ replace (
 	// github.com/cosmos/cosmos-sdk => ./cosmos-sdk
 
 	// temporary fork of ethermint while evmos upgrades
-	github.com/evmos/ethermint => github.com/realiotech/ethermint v0.21.0-realio-1
+	github.com/evmos/ethermint => github.com/GNaD13/ethermint v0.0.0-20240513060207-5446b218f012
 	// use cosmos flavored protobufs
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 
