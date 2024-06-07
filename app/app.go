@@ -765,7 +765,7 @@ func (app *RealioNetwork) Name() string { return app.BaseApp.Name() }
 // BeginBlocker will schedule the upgrade plan and perform the state migration (if any).
 func (app *RealioNetwork) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
 	// Perform any scheduled forks before executing the modules logic
-	app.ScheduleForkUpgrade(ctx)
+	BeginBlockForks(ctx, app)
 	return app.mm.BeginBlock(ctx, req)
 }
 
