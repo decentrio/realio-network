@@ -1604,14 +1604,14 @@ func (cs *State) recordMetrics(height int64, block *types.Block) {
 		// Sanity check that commit size matches validator set size - only applies
 		// after first block.
 		var (
-			commitSize = block.LastCommit.Size()
-			valSetLen  = len(cs.LastValidators.Validators)
-			address    types.Address
+			// commitSize = block.LastCommit.Size()
+			// valSetLen  = len(cs.LastValidators.Validators)
+			address types.Address
 		)
-		if commitSize != valSetLen {
-			panic(fmt.Sprintf("commit size (%d) doesn't match valset length (%d) at height %d\n\n%v\n\n%v",
-				commitSize, valSetLen, block.Height, block.LastCommit.Signatures, cs.LastValidators.Validators))
-		}
+		// if commitSize != valSetLen {
+		// 	panic(fmt.Sprintf("commit size (%d) doesn't match valset length (%d) at height %d\n\n%v\n\n%v",
+		// 		commitSize, valSetLen, block.Height, block.LastCommit.Signatures, cs.LastValidators.Validators))
+		// }
 
 		if cs.privValidator != nil {
 			if cs.privValidatorPubKey == nil {

@@ -743,7 +743,6 @@ func New(
 	app.SetAnteHandler(ante.NewAnteHandler(options))
 
 	app.setupUpgradeHandlers(appOpts)
-
 	if loadLatest {
 		if err := app.LoadLatestVersion(); err != nil {
 			tmos.Exit(err.Error())
@@ -765,7 +764,6 @@ func (app *RealioNetwork) Name() string { return app.BaseApp.Name() }
 // BeginBlocker will schedule the upgrade plan and perform the state migration (if any).
 func (app *RealioNetwork) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
 	// Perform any scheduled forks before executing the modules logic
-	BeginBlockForks(ctx, app)
 	return app.mm.BeginBlock(ctx, req)
 }
 

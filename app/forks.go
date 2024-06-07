@@ -4,7 +4,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-var Forks = []Fork{}
+var Forks = []Fork{v1Fork, v2Fork}
 
 type Fork struct {
 	// Upgrade version name, for the upgrade handler, e.g. `v7`
