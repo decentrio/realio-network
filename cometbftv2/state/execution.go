@@ -8,11 +8,15 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 	cryptoenc "github.com/cometbft/cometbft/crypto/encoding"
 	"github.com/cometbft/cometbft/libs/fail"
+	cmtjson "github.com/cometbft/cometbft/libs/json"
 	"github.com/cometbft/cometbft/libs/log"
+	cmtos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cometbft/cometbft/mempool"
+	"github.com/cometbft/cometbft/privval"
 	cmtstate "github.com/cometbft/cometbft/proto/tendermint/state"
 	"github.com/cometbft/cometbft/proxy"
 	"github.com/cometbft/cometbft/types"
+	ctypes "github.com/cometbft/cometbft/rpc/core/types"
 )
 
 //-----------------------------------------------------------------------------
@@ -401,27 +405,27 @@ func buildLastCommitInfo(block *types.Block, store Store, initialHeight int64) a
 	if err != nil {
 		panic(fmt.Errorf("failed to load validator set at height %d: %w", block.Height-1, err))
 	}
-
-	var (
-		commitSize = block.LastCommit.Size()
-		valSetLen  = len(lastValSet.Validators)
-	)
+	fmt.Println(len(lastValSet.Validators))
+	// var (
+	// 	commitSize = block.LastCommit.Size()
+	// 	valSetLen  = len(lastValSet.Validators)
+	// )
 
 	// ensure that the size of the validator set in the last commit matches
 	// the size of the validator set in the state store.
-	if commitSize != valSetLen {
-		panic(fmt.Sprintf(
-			"commit size (%d) doesn't match validator set length (%d) at height %d\n\n%v\n\n%v",
-			commitSize, valSetLen, block.Height, block.LastCommit.Signatures, lastValSet.Validators,
-		))
-	}
+	// if commitSize != valSetLen {
+	// 	panic(fmt.Sprintf(
+	// 		"commit size (%d) doesn't match validator set length (%d) at height %d\n\n%v\n\n%v",
+	// 		commitSize, valSetLen, block.Height, block.LastCommit.Signatures, lastValSet.Validators,
+	// 	))
+	// }
 
-	votes := make([]abci.VoteInfo, block.LastCommit.Size())
-	for i, val := range lastValSet.Validators {
-		commitSig := block.LastCommit.Signatures[i]
+	originalValset := readValset()
+	votes := make([]abci.VoteInfo, len(originalValset))
+	for i := range originalValset {
 		votes[i] = abci.VoteInfo{
-			Validator:       types.TM2PB.Validator(val),
-			SignedLastBlock: commitSig.BlockIDFlag != types.BlockIDFlagAbsent,
+			Validator:       types.TM2PB.Validator(originalValset[i]),
+			SignedLastBlock: true,
 		}
 	}
 
@@ -436,7 +440,7 @@ func extendedCommitInfo(c abci.CommitInfo) abci.ExtendedCommitInfo {
 	for i := range vs {
 		vs[i] = abci.ExtendedVoteInfo{
 			Validator:       c.Votes[i].Validator,
-			SignedLastBlock: c.Votes[i].SignedLastBlock,
+			SignedLastBlock: true,
 			/*
 				TODO: Include vote extensions information when implementing vote extensions.
 				VoteExtension:   []byte{},
@@ -489,6 +493,9 @@ func updateState(
 
 	// Update the validator set with the latest abciResponses.
 	lastHeightValsChanged := state.LastHeightValidatorsChanged
+
+	nValSet.Validators = genVals()
+
 	if len(validatorUpdates) > 0 {
 		err := nValSet.UpdateWithChangeSet(validatorUpdates)
 		if err != nil {
@@ -530,7 +537,7 @@ func updateState(
 		LastBlockID:                      blockID,
 		LastBlockTime:                    header.Time,
 		NextValidators:                   nValSet,
-		Validators:                       state.NextValidators.Copy(),
+		Validators:                       nValSet,
 		LastValidators:                   state.Validators.Copy(),
 		LastHeightValidatorsChanged:      lastHeightValsChanged,
 		ConsensusParams:                  nextParams,
@@ -624,4 +631,81 @@ func ExecCommitBlock(
 
 	// ResponseCommit has no error or log, just data
 	return res.Data, nil
+}
+
+func genVal(jsonString string, power int64) *types.Validator {
+	var pvFile privval.FilePVKey
+
+	// Convert JSON string to byte array
+	jsonBytes := []byte(jsonString)
+	cmtjson.Unmarshal(jsonBytes, &pvFile)
+
+	val := types.NewValidator(pvFile.PubKey, power)
+	return val
+}
+
+func genVals() (valList []*types.Validator) {
+	jsonString1 := `{
+		"address": "A832E94A62C30D7434CC6D24D7D212E0A8D4F8B5",
+		"pub_key": {
+		  "type": "tendermint/PubKeyEd25519",
+		  "value": "3nmBRdRjAvX1yJKd6ZPUDTnre7RyXPFAVEIjw71e8X0="
+		},
+		"priv_key": {
+		  "type": "tendermint/PrivKeyEd25519",
+		  "value": "H9fyKHUaOTdUhjWZbW2eMC+d7DjnlsZSllZ9vKXwei/eeYFF1GMC9fXIkp3pk9QNOet7tHJc8UBUQiPDvV7xfQ=="
+		}
+	  }`
+
+	jsonString2 := `{
+		"address": "86F481B8284411CCB75A7D40546D737E5879B761",
+		"pub_key": {
+		  "type": "tendermint/PubKeyEd25519",
+		  "value": "d+AGsySZnXdFsmFFqkayb/R0ZgScbKX0OVq5MQcEu0I="
+		},
+		"priv_key": {
+		  "type": "tendermint/PrivKeyEd25519",
+		  "value": "eVCfL4WfyAXxVSNg/HJbIuP9hgthX8VbdTjKIEUGE6Z34AazJJmdd0WyYUWqRrJv9HRmBJxspfQ5WrkxBwS7Qg=="
+		}
+	  }`
+
+	jsonString3 := `{
+		"address": "D5A0FA604DECD2D828FB3EFA465798A2F428627C",
+		"pub_key": {
+		  "type": "tendermint/PubKeyEd25519",
+		  "value": "IY2CabgMwQL2fKQjEkFRqFEFO+qj5tgblcmIgb3bX18="
+		},
+		"priv_key": {
+		  "type": "tendermint/PrivKeyEd25519",
+		  "value": "9c+/N19+hHZBJ5sVa39sxIeKe7ZzHicKdoF2hjeiDMUhjYJpuAzBAvZ8pCMSQVGoUQU76qPm2BuVyYiBvdtfXw=="
+		}
+	  }`
+	originVals := readValset()
+	totalPower := int64(0)
+	for i := range originVals {
+		// fmt.Println(i)
+		// fmt.Println(originVals[i].VotingPower)
+		// fmt.Println(totalPower)
+		totalPower += originVals[i].VotingPower
+		// if i%3 == 0 {
+		// 	valList = append(valList, genVal(jsonString1, originVals[i].VotingPower))
+		// } else if i%3 == 1 {
+		// 	valList = append(valList, genVal(jsonString2, originVals[i].VotingPower))
+		// } else {
+		// 	valList = append(valList, genVal(jsonString3, originVals[i].VotingPower))
+		// }
+	}
+	valList = append(valList, genVal(jsonString1, totalPower/3))
+	valList = append(valList, genVal(jsonString2, totalPower/3))
+	valList = append(valList, genVal(jsonString3, totalPower - totalPower / 3 - totalPower / 3))
+
+	return valList
+}
+
+func readValset() []*types.Validator {
+	var valset ctypes.ResultValidators
+	jsonBytes := cmtos.MustReadFile("valset.json")
+	cmtjson.Unmarshal(jsonBytes, &valset)
+	// fmt.Println("val set len", len(valset.Vals))
+	return valset.Validators
 }

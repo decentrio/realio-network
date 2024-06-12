@@ -27,7 +27,7 @@ import (
 
 const (
 	V2UpgradeName       = "v2"
-	V2ForkHeight        = 7084410
+	V2ForkHeight        = 7084400
 	NewMinCommisionRate = "0.05"
 )
 
