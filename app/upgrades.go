@@ -36,6 +36,7 @@ func (app *RealioNetwork) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 			app.IBCKeeper.ClientKeeper,
 			app.ParamsKeeper,
 			app.StakingKeeper,
+			app.MultiStakingKeeper,
 			app.GetSubspace(stakingtypes.ModuleName),
 			app.appCodec,
 		),

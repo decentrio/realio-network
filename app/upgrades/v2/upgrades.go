@@ -10,6 +10,12 @@ import (
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	ibctmmigrations "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint/migrations"
+	multistakingkeeper "github.com/realio-tech/multi-staking-module/x/multi-staking/keeper"
+	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
+)
+
+const (
+	mainBondDenom = "ario"
 )
 
 func CreateUpgradeHandler(
@@ -19,14 +25,23 @@ func CreateUpgradeHandler(
 	clientKeeper ibctmmigrations.ClientKeeper,
 	pk paramskeeper.Keeper,
 	sk *stakingkeeper.Keeper,
+	mk multistakingkeeper.Keeper,
 	stakingLegacySubspace paramstypes.Subspace,
 	cdc codec.BinaryCodec,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx.Logger().Info("Starting upgrade for Realio-network v2...")
+
+		params := multistakingtypes.Params{
+			MainBondDenom: mainBondDenom,
+		}
+		err := mk.SetParams(ctx, params)
+		if err != nil {
+			panic(err)
+		}
+
 		fixMinCommisionRate(ctx, sk, stakingLegacySubspace)
 		migrateParamSubspace(ctx, ck, pk)
-		// fixMinCommisionRate(ctx, sk)
 
 		if _, err := ibctmmigrations.PruneExpiredConsensusStates(ctx, cdc, clientKeeper); err != nil {
 			return nil, err

@@ -464,6 +464,7 @@ func New(
 		app.StakingKeeper,
 		app.BankKeeper,
 		keys[multistakingtypes.StoreKey],
+		authAddr,
 	)
 
 	// realio keeper
@@ -724,7 +725,7 @@ func New(
 		FeegrantKeeper:         app.FeeGrantKeeper,
 		SigGasConsumer:         evmante.SigVerificationGasConsumer,
 		IBCKeeper:              app.IBCKeeper,
-		StakingKeeper:          app.StakingKeeper,
+		StakingKeeper:          app.MultiStakingKeeper,
 		EvmKeeper:              app.EvmKeeper,
 		FeeMarketKeeper:        app.FeeMarketKeeper,
 		MaxTxGasWanted:         maxGasWanted,
