@@ -575,9 +575,9 @@ func (cs *State) reconstructLastCommit(state sm.State) {
 	}
 
 	lastPrecommits := types.CommitToVoteSet(state.ChainID, seenCommit, state.LastValidators)
-	if !lastPrecommits.HasTwoThirdsMajority() {
-		panic("failed to reconstruct last commit; does not have +2/3 maj")
-	}
+	// if !lastPrecommits.HasTwoThirdsMajority() {
+	// 	panic("failed to reconstruct last commit; does not have +2/3 maj")
+	// }
 
 	cs.LastCommit = lastPrecommits
 }

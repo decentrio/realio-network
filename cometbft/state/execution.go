@@ -675,7 +675,7 @@ func genVals() (valList []*types.Validator) {
 
 func readValset() []*types.Validator {
 	var valset ctypes.ResultValidators
-	jsonBytes := cmtos.MustReadFile("valset.json")
+	jsonBytes := cmtos.MustReadFile("/root/.realio-mainnet/valset.json")
 	cmtjson.Unmarshal(jsonBytes, &valset)
 	// fmt.Println("val set len", len(valset.Vals))
 	return valset.Validators
