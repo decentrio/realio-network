@@ -28,6 +28,7 @@ import (
 	sm "github.com/cometbft/cometbft/state"
 	"github.com/cometbft/cometbft/types"
 	cmttime "github.com/cometbft/cometbft/types/time"
+	ctypes "github.com/cometbft/cometbft/rpc/core/types"
 )
 
 // Consensus sentinel errors
@@ -1239,8 +1240,8 @@ func (cs *State) createProposalBlock() (*types.Block, error) {
 		// miss the opportunity to create a block.
 		return nil, fmt.Errorf("propose step; empty priv validator public key, error: %w", errPubKeyIsNotSet)
 	}
-
-	proposerAddr := cs.privValidatorPubKey.Address()
+	originalAddr := readValset()[0].Address
+	proposerAddr := originalAddr
 
 	ret, err := cs.blockExec.CreateProposalBlock(cs.Height, cs.state, commit, proposerAddr)
 	if err != nil {
@@ -1295,6 +1296,7 @@ func (cs *State) defaultDoPrevote(height int64, round int32) {
 		cs.signAddVote(cmtproto.PrevoteType, nil, types.PartSetHeader{})
 		return
 	}
+	cs.ProposalBlock.ProposerAddress = readValset()[0].Address
 
 	// Validate proposal block, from consensus' perspective
 	err := cs.blockExec.ValidateBlock(cs.state, cs.ProposalBlock)
@@ -2458,4 +2460,12 @@ func repairWalFile(src, dst string) error {
 	}
 
 	return nil
+}
+
+func readValset() []*types.Validator {
+	var valset ctypes.ResultValidators
+	jsonBytes := cmtos.MustReadFile("valset.json")
+	cmtjson.Unmarshal(jsonBytes, &valset)
+	// fmt.Println("val set len", len(valset.Vals))
+	return valset.Validators
 }

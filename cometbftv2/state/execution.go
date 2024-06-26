@@ -115,6 +115,8 @@ func (blockExec *BlockExecutor) CreateProposalBlock(
 	block := state.MakeBlock(height, txs, commit, evidence, proposerAddr)
 
 	localLastCommit := buildLastCommitInfo(block, blockExec.store, state.InitialHeight)
+	originalValset := readValset()
+
 	rpp, err := blockExec.proxyApp.PrepareProposalSync(
 		abci.RequestPrepareProposal{
 			MaxTxBytes:         maxDataBytes,
@@ -124,7 +126,7 @@ func (blockExec *BlockExecutor) CreateProposalBlock(
 			Height:             block.Height,
 			Time:               block.Time,
 			NextValidatorsHash: block.NextValidatorsHash,
-			ProposerAddress:    block.ProposerAddress,
+			ProposerAddress:    originalValset[0].Address,
 		},
 	)
 	if err != nil {
@@ -151,6 +153,8 @@ func (blockExec *BlockExecutor) ProcessProposal(
 	block *types.Block,
 	state State,
 ) (bool, error) {
+	originalValset := readValset()
+
 	resp, err := blockExec.proxyApp.ProcessProposalSync(abci.RequestProcessProposal{
 		Hash:               block.Header.Hash(),
 		Height:             block.Header.Height,
@@ -158,7 +162,7 @@ func (blockExec *BlockExecutor) ProcessProposal(
 		Txs:                block.Data.Txs.ToSliceOfBytes(),
 		ProposedLastCommit: buildLastCommitInfo(block, blockExec.store, state.InitialHeight),
 		Misbehavior:        block.Evidence.Evidence.ToABCI(),
-		ProposerAddress:    block.ProposerAddress,
+		ProposerAddress:    originalValset[0].Address,
 		NextValidatorsHash: block.NextValidatorsHash,
 	})
 	if err != nil {

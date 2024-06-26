@@ -104,11 +104,11 @@ func validateBlock(state State, block *types.Block) error {
 			len(block.ProposerAddress),
 		)
 	}
-	if !state.Validators.HasAddress(block.ProposerAddress) {
-		return fmt.Errorf("block.Header.ProposerAddress %X is not a validator",
-			block.ProposerAddress,
-		)
-	}
+	// if !state.Validators.HasAddress(block.ProposerAddress) {
+	// 	return fmt.Errorf("block.Header.ProposerAddress %X is not a validator",
+	// 		block.ProposerAddress,
+	// 	)
+	// }
 
 	// Validate block Time
 	switch {
