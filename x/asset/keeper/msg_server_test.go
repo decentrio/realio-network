@@ -471,33 +471,3 @@ func (s *KeeperTestSuite) TestDisablePrivilege() {
 // 		})
 // 	}
 // }
-
-// type privilegeMsg struct {
-// 	types.PrivilegeMsgI
-// }
-
-// func (p privilegeMsg)
-
-// func main() {
-// 	// Tạo một thông điệp protobuf cụ thể.
-// 	myMessage := &MyMessage{
-// 		Name: "Test",
-// 		Age:  30,
-// 	}
-
-// 	// Đóng gói thông điệp vào Any.
-// 	anyMessage, err := anypb.New(myMessage)
-// 	if err != nil {
-// 		fmt.Println("Error creating Any:", err)
-// 		return
-// 	}
-
-// 	// Giải mã thông điệp từ Any.
-// 	var outMessage MyMessage
-// 	if err := anyMessage.UnmarshalTo(&outMessage); err != nil {
-// 		fmt.Println("Error unmarshaling Any:", err)
-// 		return
-// 	}
-
-// 	fmt.Println("Decoded message:", outMessage)
-// }
