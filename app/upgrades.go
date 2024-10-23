@@ -10,6 +10,7 @@ import (
 	v2 "github.com/realiotech/realio-network/app/upgrades/v2"
 
 	upgradetypes "cosmossdk.io/x/upgrade/types"
+	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 )
@@ -68,6 +69,25 @@ func (app *RealioNetwork) setupUpgradeHandlers() {
 	}
 
 	if upgradeInfo.Name == v2.UpgradeName && !app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
-		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, &v2.V2StoreUpgrades))
+		app.SetStoreLoader(RealioUpgradeStoreLoader(upgradeInfo.Height, &v2.V2StoreUpgrades, &v2.V2RemoveModules))
+	}
+}
+
+func RealioUpgradeStoreLoader(upgradeHeight int64, storeUpgrades *storetypes.StoreUpgrades, removeModules *storetypes.StoreUpgrades) baseapp.StoreLoader {
+	return func(ms storetypes.CommitMultiStore) error {
+		if upgradeHeight == ms.LastCommitID().Version+1 {
+
+			if err := ms.LoadLatestVersionAndUpgrade(removeModules); err != nil {
+				return err
+			}
+
+			// Check if the current commit version and upgrade height matches
+			if len(storeUpgrades.Renamed) > 0 || len(storeUpgrades.Deleted) > 0 || len(storeUpgrades.Added) > 0 {
+				return ms.LoadLatestVersionAndUpgrade(storeUpgrades)
+			}
+		}
+
+		// Otherwise load default store loader
+		return baseapp.DefaultStoreLoader(ms)
 	}
 }

@@ -4,6 +4,7 @@ import (
 	storetypes "cosmossdk.io/store/types"
 	consensustypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
+	evmtypes "github.com/evmos/os/x/evm/types"
 	bridgetypes "github.com/realiotech/realio-network/x/bridge/types"
 )
 
@@ -17,5 +18,12 @@ var V2StoreUpgrades = storetypes.StoreUpgrades{
 		consensustypes.ModuleName,
 		crisistypes.ModuleName,
 		bridgetypes.ModuleName,
+		evmtypes.ModuleName,
+	},
+}
+
+var V2RemoveModules = storetypes.StoreUpgrades{
+	Deleted: []string{
+		evmtypes.ModuleName,
 	},
 }
