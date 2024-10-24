@@ -1070,10 +1070,10 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(ibcexported.ModuleName).WithKeyTable(keyTable)
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName).WithKeyTable(ibctransfertypes.ParamKeyTable())
 	// realio network subspaces
-	paramsKeeper.Subspace(assetmoduletypes.ModuleName)
-	paramsKeeper.Subspace(bridgemoduletypes.ModuleName)
+	paramsKeeper.Subspace(assetmoduletypes.ModuleName).WithKeyTable(assetmoduletypes.ParamKeyTable())
+	paramsKeeper.Subspace(bridgemoduletypes.ModuleName).WithKeyTable(bridgemoduletypes.ParamKeyTable())
 	// ethermint subspaces
-	paramsKeeper.Subspace(evmtypes.ModuleName)
+	paramsKeeper.Subspace(evmtypes.ModuleName).WithKeyTable(evmtypes.ParamKeyTable())
 	paramsKeeper.Subspace(feemarkettypes.ModuleName).WithKeyTable(feemarkettypes.ParamKeyTable())
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
 

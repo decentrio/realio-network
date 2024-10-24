@@ -52,6 +52,8 @@ func (app *RealioNetwork) setupUpgradeHandlers() {
 		v2.CreateUpgradeHandler(
 			app.mm,
 			app.configurator,
+			app.AccountKeeper,
+			app.EvmKeeper,
 			app.ParamsKeeper,
 			app.ConsensusParamsKeeper,
 			*app.IBCKeeper,

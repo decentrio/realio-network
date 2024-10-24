@@ -428,10 +428,10 @@ github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSs
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc h1:U9qPSI2PIWSS1VwoXQT9A3Wy9MM3WgvqSxFWenqJduM=
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/decentrio/evmos-os v0.0.0-20241021100424-9e6ab5217707 h1:x1G8jBkxVfvPSndN17s9vJCZCJ1zWcDgtfF8WEw43gA=
-github.com/decentrio/evmos-os v0.0.0-20241021100424-9e6ab5217707/go.mod h1:uQQyppk8z2C7Ypk/zj8/wnJSrf74rY8cXLzsD8F1tEE=
-github.com/decentrio/evmos-os/example_chain v0.0.0-20241021100424-9e6ab5217707 h1:a7PBLpsA623SfZF96QP1x9IRVss4WuZ4+mATnJzp/wY=
-github.com/decentrio/evmos-os/example_chain v0.0.0-20241021100424-9e6ab5217707/go.mod h1:+SPMqw9wtbWO3jG02uLbLtVVjMHBldmXTN51kxbWqJ8=
+github.com/decentrio/evmos-os v0.0.0-20241024044718-e6e96465be58 h1:6pJVJoCTMs1mh1fbwVBeRe+sVTnS3lPZd8UeyjDHzxM=
+github.com/decentrio/evmos-os v0.0.0-20241024044718-e6e96465be58/go.mod h1:uQQyppk8z2C7Ypk/zj8/wnJSrf74rY8cXLzsD8F1tEE=
+github.com/decentrio/evmos-os/example_chain v0.0.0-20241024044718-e6e96465be58 h1:4RLCgtkr3PhHEwbA8H/dFDvdfZNaGM2kYVGgLi7n1ug=
+github.com/decentrio/evmos-os/example_chain v0.0.0-20241024044718-e6e96465be58/go.mod h1:+SPMqw9wtbWO3jG02uLbLtVVjMHBldmXTN51kxbWqJ8=
 github.com/decentrio/multi-staking v0.0.0-20241009040005-7e6827edf511 h1:SanXgVfxhZXkJ+WkhmKqCozNLvdZMO/+MGF642bmneQ=
 github.com/decentrio/multi-staking v0.0.0-20241009040005-7e6827edf511/go.mod h1:Ap8n5OVafMew5tp7G10BfUXTGyvUVKBDqoeg5tEcTGo=
 github.com/deckarep/golang-set v1.8.0 h1:sk9/l/KqpunDwP7pSjUg0keiOOLEnOBHzykLrsPppp4=
