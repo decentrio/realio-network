@@ -25,6 +25,7 @@ import (
 	"github.com/cosmos/ibc-go/v8/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
 	"github.com/ethereum/go-ethereum/common"
+	ostypes "github.com/evmos/os/types"
 	evmkeeper "github.com/evmos/os/x/evm/keeper"
 	evmtypes "github.com/evmos/os/x/evm/types"
 	assettypes "github.com/realiotech/realio-network/x/asset/types"
@@ -36,7 +37,7 @@ func CreateUpgradeHandler(
 	mm *module.Manager,
 	configurator module.Configurator,
 	accountkeeper authkeeper.AccountKeeper,
-	evmkeeper evmkeeper.Keeper,
+	evmkeeper *evmkeeper.Keeper,
 	paramskeeper paramskeeper.Keeper,
 	consensuskeeper consensusparamkeeper.Keeper,
 	IBCKeeper ibckeeper.Keeper,
@@ -89,7 +90,7 @@ func CreateUpgradeHandler(
 		params.AllowedClients = append(params.AllowedClients, exported.Localhost)
 		IBCKeeper.ClientKeeper.SetParams(sdkCtx, params)
 
-		MigrateEthAccountsToBaseAccounts(sdkCtx, accountkeeper, &evmkeeper)
+		MigrateEthAccountsToBaseAccounts(sdkCtx, accountkeeper, evmkeeper)
 		return mm.RunMigrations(ctx, configurator, vm)
 	}
 }
@@ -99,7 +100,7 @@ func CreateUpgradeHandler(
 // EthAccounts to standard Cosmos SDK accounts.
 func MigrateEthAccountsToBaseAccounts(ctx sdk.Context, ak authkeeper.AccountKeeper, ek *evmkeeper.Keeper) {
 	ak.IterateAccounts(ctx, func(account sdk.AccountI) (stop bool) {
-		ethAcc, ok := account.(*evmtypes.EthAccount)
+		ethAcc, ok := account.(*ostypes.EthAccount)
 		if !ok {
 			return false
 		}
