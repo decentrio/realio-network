@@ -40,7 +40,7 @@ func CreateUpgradeHandler(
 	configurator module.Configurator,
 	accountKeeper authkeeper.AccountKeeper,
 	evmKeeper *evmkeeper.Keeper,
-	bridgeKeeper *bridgekeeper.Keeper,
+	bridgeKeeper bridgekeeper.Keeper,
 	paramsKeeper paramskeeper.Keeper,
 	consensusKeeper consensusparamkeeper.Keeper,
 	IBCKeeper ibckeeper.Keeper,
@@ -94,15 +94,14 @@ func CreateUpgradeHandler(
 
 		MigrateEthAccountsToBaseAccounts(sdkCtx, accountKeeper, evmKeeper)
 
-		// Update bridge genesis state
-		err := bridgeKeeper.Params.Set(ctx, bridgetypes.NewParams("realio194j0r6u3uf4x4yac4dwtkf9pdztqxalgehjltd"))
+		// Run migrations and init genesis for bridge module
+		newVM, err := mm.RunMigrations(ctx, configurator, vm)
 		if err != nil {
 			return nil, err
 		}
-		err = bridgeKeeper.RegisteredCoins.Set(ctx, "ario", bridgetypes.RateLimit{
-			Ratelimit:     math.Int(math.NewUintFromString("1000000000")),
-			CurrentInflow: math.ZeroInt(),
-		})
+
+		// Update bridge genesis state
+		err = bridgeKeeper.Params.Set(ctx, bridgetypes.NewParams("realio15md2mg7w62xf53gdnv7m06lpumunuhqrm5fuxl"))
 		if err != nil {
 			return nil, err
 		}
@@ -113,8 +112,15 @@ func CreateUpgradeHandler(
 		if err != nil {
 			return nil, err
 		}
+		err = bridgeKeeper.RegisteredCoins.Set(ctx, "arst", bridgetypes.RateLimit{
+			Ratelimit:     math.Int(math.NewUintFromString("1000000000000000000000000")),
+			CurrentInflow: math.ZeroInt(),
+		})
+		if err != nil {
+			return nil, err
+		}
 		err = bridgeKeeper.EpochInfo.Set(ctx, bridgetypes.EpochInfo{
-			StartTime:            time.Unix(int64(1729761336), 0),
+			StartTime:            time.Unix(int64(1729763876), 0),
 			Duration:             time.Minute,
 			EpochCountingStarted: false,
 		})
@@ -122,7 +128,7 @@ func CreateUpgradeHandler(
 			return nil, err
 		}
 
-		return mm.RunMigrations(ctx, configurator, vm)
+		return newVM, nil
 	}
 }
 
