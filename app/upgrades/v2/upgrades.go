@@ -2,7 +2,6 @@ package v2
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"cosmossdk.io/math"
@@ -41,7 +40,7 @@ func CreateUpgradeHandler(
 	configurator module.Configurator,
 	accountKeeper authkeeper.AccountKeeper,
 	evmKeeper *evmkeeper.Keeper,
-	bridgeKeeper bridgekeeper.Keeper,
+	bridgeKeeper *bridgekeeper.Keeper,
 	paramsKeeper paramskeeper.Keeper,
 	consensusKeeper consensusparamkeeper.Keeper,
 	IBCKeeper ibckeeper.Keeper,
@@ -50,7 +49,6 @@ func CreateUpgradeHandler(
 
 		for _, subspace := range paramsKeeper.GetSubspaces() {
 			subspace := subspace
-			fmt.Println("subspace.Name(): ", subspace.Name())
 
 			var keyTable paramstypes.KeyTable
 			switch subspace.Name() {
@@ -116,7 +114,7 @@ func CreateUpgradeHandler(
 			return nil, err
 		}
 		err = bridgeKeeper.EpochInfo.Set(ctx, bridgetypes.EpochInfo{
-			StartTime:            time.Unix(int64(1729760143), 0),
+			StartTime:            time.Unix(int64(1729761336), 0),
 			Duration:             time.Minute,
 			EpochCountingStarted: false,
 		})
