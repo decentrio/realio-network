@@ -1015,6 +1015,8 @@ func (app *RealioNetwork) AutoCliOpts() autocli.AppOptions {
 		}
 	}
 
+	modules["staking"] = staking.NewAppModule(app.appCodec, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.GetSubspace(stakingtypes.ModuleName))
+
 	return autocli.AppOptions{
 		Modules:               modules,
 		ModuleOptions:         runtimeservices.ExtractAutoCLIOptions(app.mm.Modules),
