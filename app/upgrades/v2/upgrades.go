@@ -3,7 +3,9 @@ package v2
 import (
 	"context"
 	"fmt"
+	"time"
 
+	"cosmossdk.io/math"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -29,6 +31,7 @@ import (
 	evmkeeper "github.com/evmos/os/x/evm/keeper"
 	evmtypes "github.com/evmos/os/x/evm/types"
 	assettypes "github.com/realiotech/realio-network/x/asset/types"
+	bridgekeeper "github.com/realiotech/realio-network/x/bridge/keeper"
 	bridgetypes "github.com/realiotech/realio-network/x/bridge/types"
 )
 
@@ -36,15 +39,16 @@ import (
 func CreateUpgradeHandler(
 	mm *module.Manager,
 	configurator module.Configurator,
-	accountkeeper authkeeper.AccountKeeper,
-	evmkeeper *evmkeeper.Keeper,
-	paramskeeper paramskeeper.Keeper,
-	consensuskeeper consensusparamkeeper.Keeper,
+	accountKeeper authkeeper.AccountKeeper,
+	evmKeeper *evmkeeper.Keeper,
+	bridgeKeeper bridgekeeper.Keeper,
+	paramsKeeper paramskeeper.Keeper,
+	consensusKeeper consensusparamkeeper.Keeper,
 	IBCKeeper ibckeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx context.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 
-		for _, subspace := range paramskeeper.GetSubspaces() {
+		for _, subspace := range paramsKeeper.GetSubspaces() {
 			subspace := subspace
 			fmt.Println("subspace.Name(): ", subspace.Name())
 
@@ -80,17 +84,46 @@ func CreateUpgradeHandler(
 		}
 
 		sdkCtx := sdk.UnwrapSDKContext(ctx)
-		legacyBaseAppSubspace := paramskeeper.Subspace(baseapp.Paramspace).WithKeyTable(paramstypes.ConsensusParamsKeyTable())
-		baseapp.MigrateParams(sdkCtx, legacyBaseAppSubspace, consensuskeeper.ParamsStore)
+		legacyBaseAppSubspace := paramsKeeper.Subspace(baseapp.Paramspace).WithKeyTable(paramstypes.ConsensusParamsKeyTable())
+		baseapp.MigrateParams(sdkCtx, legacyBaseAppSubspace, consensusKeeper.ParamsStore)
 
-		legacyClientSubspace, _ := paramskeeper.GetSubspace(exported.ModuleName)
+		legacyClientSubspace, _ := paramsKeeper.GetSubspace(exported.ModuleName)
 		var params clienttypes.Params
 		legacyClientSubspace.GetParamSet(sdkCtx, &params)
 
 		params.AllowedClients = append(params.AllowedClients, exported.Localhost)
 		IBCKeeper.ClientKeeper.SetParams(sdkCtx, params)
 
-		MigrateEthAccountsToBaseAccounts(sdkCtx, accountkeeper, evmkeeper)
+		MigrateEthAccountsToBaseAccounts(sdkCtx, accountKeeper, evmKeeper)
+
+		// Update bridge genesis state
+		err := bridgeKeeper.Params.Set(ctx, bridgetypes.NewParams("realio194j0r6u3uf4x4yac4dwtkf9pdztqxalgehjltd"))
+		if err != nil {
+			return nil, err
+		}
+		err = bridgeKeeper.RegisteredCoins.Set(ctx, "ario", bridgetypes.RateLimit{
+			Ratelimit:     math.Int(math.NewUintFromString("1000000000")),
+			CurrentInflow: math.ZeroInt(),
+		})
+		if err != nil {
+			return nil, err
+		}
+		err = bridgeKeeper.RegisteredCoins.Set(ctx, "ario", bridgetypes.RateLimit{
+			Ratelimit:     math.Int(math.NewUintFromString("1000000000000000000000000")),
+			CurrentInflow: math.ZeroInt(),
+		})
+		if err != nil {
+			return nil, err
+		}
+		err = bridgeKeeper.EpochInfo.Set(ctx, bridgetypes.EpochInfo{
+			StartTime:            time.Unix(int64(1729760143), 0),
+			Duration:             time.Minute,
+			EpochCountingStarted: false,
+		})
+		if err != nil {
+			return nil, err
+		}
+
 		return mm.RunMigrations(ctx, configurator, vm)
 	}
 }
