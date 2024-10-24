@@ -2,6 +2,7 @@ package app
 
 import (
 	"github.com/cosmos/gogoproto/proto"
+	"github.com/realiotech/realio-network/cmd/config"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"cosmossdk.io/simapp/params"
@@ -10,7 +11,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec/address"
 	"github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/std"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 
@@ -26,10 +26,10 @@ func MakeEncodingConfig() params.EncodingConfig {
 	legacyAmino := codec.NewLegacyAmino()
 	signingOptions := signing.Options{
 		AddressCodec: address.Bech32Codec{
-			Bech32Prefix: sdk.GetConfig().GetBech32AccountAddrPrefix(),
+			Bech32Prefix: config.Bech32PrefixAccAddr,
 		},
 		ValidatorAddressCodec: address.Bech32Codec{
-			Bech32Prefix: sdk.GetConfig().GetBech32ValidatorAddrPrefix(),
+			Bech32Prefix: config.Bech32PrefixValAddr,
 		},
 		CustomGetSigners: map[protoreflect.FullName]signing.GetSignersFunc{
 			evmtypes.MsgEthereumTxCustomGetSigner.MsgType:     evmtypes.MsgEthereumTxCustomGetSigner.Fn,
