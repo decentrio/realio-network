@@ -432,8 +432,8 @@ github.com/decentrio/evmos-os v0.0.0-20241024054802-0945bfe2d45b h1:X+JTL+nm0Ylr
 github.com/decentrio/evmos-os v0.0.0-20241024054802-0945bfe2d45b/go.mod h1:uQQyppk8z2C7Ypk/zj8/wnJSrf74rY8cXLzsD8F1tEE=
 github.com/decentrio/evmos-os/example_chain v0.0.0-20241024054802-0945bfe2d45b h1:knpuahWxslEV7z2H3nslmhlHBjBzWQiyUN1YueTcwig=
 github.com/decentrio/evmos-os/example_chain v0.0.0-20241024054802-0945bfe2d45b/go.mod h1:+SPMqw9wtbWO3jG02uLbLtVVjMHBldmXTN51kxbWqJ8=
-github.com/decentrio/multi-staking v0.0.0-20241024063118-c19b60f14dc2 h1:COFMsw34Ydw5WB9f7d/4hjx+J7lJPDYdSdskpwx+AAE=
-github.com/decentrio/multi-staking v0.0.0-20241024063118-c19b60f14dc2/go.mod h1:88BiAAV1Jp1sM4ZR09VAZimN5X34BO/7XTO7/si1tJE=
+github.com/decentrio/multi-staking v0.0.0-20241025035539-29cf83199609 h1:1ttWK87XsSBLEXTSkaZo0kcs8nBnCqiIioK55VcvC8I=
+github.com/decentrio/multi-staking v0.0.0-20241025035539-29cf83199609/go.mod h1:88BiAAV1Jp1sM4ZR09VAZimN5X34BO/7XTO7/si1tJE=
 github.com/deckarep/golang-set v1.8.0 h1:sk9/l/KqpunDwP7pSjUg0keiOOLEnOBHzykLrsPppp4=
 github.com/deckarep/golang-set v1.8.0/go.mod h1:5nI87KwE7wgsBU1F4GKAw2Qod7p5kyS383rP6+o6qqo=
 github.com/decred/dcrd/crypto/blake256 v1.0.0/go.mod h1:sQl2p6Y26YV+ZOcSTP6thNdn47hh8kt6rqSlvmrXFAc=
