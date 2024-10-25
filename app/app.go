@@ -10,8 +10,14 @@ import (
 	"github.com/realiotech/realio-network/app/ante"
 
 	reflectionv1 "cosmossdk.io/api/cosmos/reflection/v1"
+	errorsmod "cosmossdk.io/errors"
 	storetypes "cosmossdk.io/store/types"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
+	"github.com/cosmos/cosmos-sdk/crypto/types/multisig"
 	"github.com/cosmos/cosmos-sdk/runtime"
+	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/cosmos-sdk/types/tx/signing"
+	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authsims "github.com/cosmos/cosmos-sdk/x/auth/simulation"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/cosmos/gogoproto/proto"
@@ -30,6 +36,7 @@ import (
 	srvflags "github.com/evmos/os/server/flags"
 	ethermint "github.com/evmos/os/types"
 
+	"github.com/evmos/os/crypto/ethsecp256k1"
 	"github.com/evmos/os/x/evm"
 	evmkeeper "github.com/evmos/os/x/evm/keeper"
 	evmtypes "github.com/evmos/os/x/evm/types"
@@ -789,7 +796,7 @@ func New(
 		BankKeeper:             app.BankKeeper,
 		SignModeHandler:        encodingConfig.TxConfig.SignModeHandler(),
 		FeegrantKeeper:         app.FeeGrantKeeper,
-		SigGasConsumer:         evmosante.SigVerificationGasConsumer,
+		SigGasConsumer:         RealioSigVerificationGasConsumer,
 		IBCKeeper:              app.IBCKeeper,
 		EvmKeeper:              app.EvmKeeper,
 		FeeMarketKeeper:        app.FeeMarketKeeper,
@@ -1080,4 +1087,32 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
 
 	return paramsKeeper
+}
+
+func RealioSigVerificationGasConsumer(
+	meter storetypes.GasMeter, sig signing.SignatureV2, params authtypes.Params,
+) error {
+	pubkey := sig.PubKey
+	switch pubkey := pubkey.(type) {
+
+	case *ethsecp256k1.PubKey:
+		// Ethereum keys
+		meter.ConsumeGas(evmosante.Secp256k1VerifyCost, "ante verify: eth_secp256k1")
+		return nil
+	case *ed25519.PubKey:
+		// Validator keys
+		meter.ConsumeGas(params.SigVerifyCostED25519, "ante verify: ed25519")
+		return errorsmod.Wrap(errortypes.ErrInvalidPubKey, "ED25519 public keys are unsupported")
+
+	case multisig.PubKey:
+		// Multisig keys
+		multisignature, ok := sig.Data.(*signing.MultiSignatureData)
+		if !ok {
+			return fmt.Errorf("expected %T, got, %T", &signing.MultiSignatureData{}, sig.Data)
+		}
+		return evmosante.ConsumeMultisignatureVerificationGas(meter, multisignature, pubkey, params, sig.Sequence)
+
+	default:
+		return authante.DefaultSigVerificationGasConsumer(meter, sig, params)
+	}
 }
