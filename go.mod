@@ -253,12 +253,12 @@ replace (
 	github.com/ethereum/go-ethereum => github.com/evmos/go-ethereum v1.10.26-evmos-rc4
 
 	// fork evmos-os to suite realio's ethermint migrations
-	github.com/evmos/os => github.com/decentrio/evmos-os v0.0.0-20241024054802-0945bfe2d45b
+	github.com/evmos/os => github.com/decentrio/evmos-os v0.0.0-20241025092425-c0996209bee6
 
 	// github.com/realio-tech/multi-staking-module => ../multi-staking
 	// github.com/evmos/os => ../evmos-os
 
-	github.com/evmos/os/example_chain => github.com/decentrio/evmos-os/example_chain v0.0.0-20241024054802-0945bfe2d45b
+	github.com/evmos/os/example_chain => github.com/decentrio/evmos-os/example_chain v0.0.0-20241025092425-c0996209bee6
 
 	// use cosmos flavored protobufs
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
