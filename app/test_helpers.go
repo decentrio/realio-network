@@ -275,3 +275,77 @@ func GenValSet(nums int) *tmtypes.ValidatorSet {
 
 	return valSet
 }
+
+func GenValSetForTestingApp(nums int) (*tmtypes.ValidatorSet, map[string]tmtypes.PrivValidator) {
+	vals := []*tmtypes.Validator{}
+	signersByAddress := make(map[string]tmtypes.PrivValidator, nums)
+
+	for i := 0; i < nums; i++ {
+		privVal := mock.NewPV()
+		pubKey, _ := privVal.GetPubKey()
+		vals = append(vals, tmtypes.NewValidator(pubKey, 1))
+		signersByAddress[pubKey.Address().String()] = privVal
+	}
+
+	valSet := tmtypes.NewValidatorSet(vals)
+
+	return valSet, signersByAddress
+}
+
+func SetupForTestingApp(
+	chainID string,
+	numberVals int,
+	valSet *tmtypes.ValidatorSet,
+) (ibctesting.TestingApp, []ibctesting.SenderAccount) {
+	encCdc := MakeEncodingConfig()
+	senderAccs := []ibctesting.SenderAccount{}
+
+	// generate genesis account
+	senderPrivKey := secp256k1.GenPrivKey()
+	acc := authtypes.NewBaseAccount(senderPrivKey.PubKey().Address().Bytes(), senderPrivKey.PubKey(), 0, 0)
+	balance := banktypes.Balance{
+		Address: acc.GetAddress().String(),
+		Coins:   sdk.NewCoins(sdk.NewCoin(types.BaseDenom, math.NewInt(100000000000000))),
+	}
+
+	senderAcc := ibctesting.SenderAccount{
+		SenderAccount: acc,
+		SenderPrivKey: senderPrivKey,
+	}
+	senderAccs = append(senderAccs, senderAcc)
+
+	db := dbm.NewMemDB()
+	opt := baseapp.SetChainID(chainID)
+	app := New(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, 5, encCdc, simtestutil.EmptyAppOptions{}, opt)
+	testApp := ibctesting.TestingApp(app)
+	// init chain must be called to stop deliverState from being nil
+	genesisState := NewDefaultGenesisState(encCdc.Codec)
+
+	genesisState = GenesisStateWithValSet(app, genesisState, valSet, []authtypes.GenesisAccount{acc}, balance)
+
+	stateBytes, err := json.MarshalIndent(genesisState, "", " ")
+	if err != nil {
+		panic(err)
+	}
+
+	// Initialize the chain
+	if _, err = testApp.InitChain(
+		&abci.RequestInitChain{
+			ChainId:         chainID,
+			Validators:      []abci.ValidatorUpdate{},
+			ConsensusParams: DefaultConsensusParams,
+			AppStateBytes:   stateBytes,
+		},
+	); err != nil {
+		panic(err)
+	}
+
+	// _, err = app.FinalizeBlock(&abci.RequestFinalizeBlock{Height: 1, Txs: [][]byte{}})
+	// if err != nil {
+	// 	panic(err)
+	// }
+
+	// app.Commit()
+
+	return testApp, senderAccs
+}
