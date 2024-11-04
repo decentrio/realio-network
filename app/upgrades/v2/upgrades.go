@@ -105,12 +105,12 @@ func CreateUpgradeHandler(
 		}
 
 		// Update bridge genesis state
-		err = bridgeKeeper.Params.Set(ctx, bridgetypes.NewParams("realio15md2mg7w62xf53gdnv7m06lpumunuhqrm5fuxl"))
+		err = bridgeKeeper.Params.Set(ctx, bridgetypes.NewParams("realio1006v4rld78jz7ygzdm50440gs93z4rkats2pe4"))
 		if err != nil {
 			return nil, err
 		}
 		err = bridgeKeeper.RegisteredCoins.Set(ctx, "ario", bridgetypes.RateLimit{
-			Ratelimit:     math.Int(math.NewUintFromString("1000000000000000000000000")),
+			Ratelimit:     math.Int(math.NewUintFromString("2000000000000000000000000")),
 			CurrentInflow: math.ZeroInt(),
 		})
 		if err != nil {
@@ -124,7 +124,7 @@ func CreateUpgradeHandler(
 			return nil, err
 		}
 		err = bridgeKeeper.EpochInfo.Set(ctx, bridgetypes.EpochInfo{
-			StartTime:            time.Unix(int64(1729763876), 0),
+			StartTime:            time.Unix(int64(1730826000), 0),
 			Duration:             time.Minute,
 			EpochCountingStarted: false,
 		})
