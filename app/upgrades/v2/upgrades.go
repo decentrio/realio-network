@@ -128,8 +128,11 @@ func CreateUpgradeHandler(
 		}
 
 		evmParams := evmtypes.DefaultParams()
-		evmParams.ActiveStaticPrecompiles = []string{
-			evmtypes.StakingPrecompileAddress,
+		evmParams.AccessControl = evmtypes.AccessControl{
+			Create: evmtypes.AccessControlType{
+				AccessType:        evmtypes.AccessTypePermissioned,
+				AccessControlList: evmtypes.DefaultCreateAllowlistAddresses,
+			},
 		}
 		err = evmKeeper.SetParams(sdkCtx, evmParams)
 		if err != nil {
