@@ -194,7 +194,7 @@ localnet-show-logstream:
 ###############################################################################
 
 PACKAGE_NAME:=github.com/realiotech/realio-network
-GOLANG_CROSS_VERSION  = v1.22.7
+GOLANG_CROSS_VERSION  = v1.22
 GOPATH ?= '$(HOME)/go'
 release-dry-run:
 	docker run \
@@ -203,6 +203,7 @@ release-dry-run:
 		-e CGO_ENABLED=1 \
 		-v /var/run/docker.sock:/var/run/docker.sock \
 		-v `pwd`:/go/src/$(PACKAGE_NAME) \
+		-v ${GOPATH}/pkg:/go/pkg \
 		-w /go/src/$(PACKAGE_NAME) \
 		ghcr.io/goreleaser/goreleaser-cross:${GOLANG_CROSS_VERSION} \
 		--clean --skip=validate --skip=publish --snapshot
