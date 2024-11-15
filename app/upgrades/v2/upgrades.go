@@ -119,7 +119,7 @@ func CreateUpgradeHandler(
 			return nil, err
 		}
 		err = bridgeKeeper.EpochInfo.Set(ctx, bridgetypes.EpochInfo{
-			StartTime:            time.Unix(int64(1731628800), 0),
+			StartTime:            time.Unix(int64(1731801600), 0),
 			Duration:             time.Minute,
 			EpochCountingStarted: false,
 		})
