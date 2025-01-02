@@ -54,6 +54,9 @@ func (m Minter) NextAnnualProvisions(_ Params, totalSupply math.Int) math.Legacy
 // BlockProvision returns the provisions for a block based on the annual
 // provisions rate.
 func (m Minter) BlockProvision(params Params) sdk.Coin {
+	fmt.Println("AnnualProvisions :", m.AnnualProvisions)
+	fmt.Println("BlocksPerYear :", int64(params.BlocksPerYear))
 	provisionAmt := m.AnnualProvisions.QuoInt(math.NewInt(int64(params.BlocksPerYear)))
+	fmt.Println("provisionAmt :", provisionAmt)
 	return sdk.NewCoin(params.MintDenom, provisionAmt.TruncateInt())
 }

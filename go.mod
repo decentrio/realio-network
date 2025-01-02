@@ -245,11 +245,10 @@ require (
 replace (
 	// need this replace to pick up the store changes (Copy func) in our cosmos-sdk fork
 	cosmossdk.io/store => github.com/evmos/cosmos-sdk/store v0.0.0-20240718141609-414cbd051fbe
+	// use Realio sdk v0.46.11-realio-4
+	// github.com/cosmos/cosmos-sdk => ../cosmos-sdk
 	// use Evmos geth fork
 	github.com/ethereum/go-ethereum => github.com/evmos/go-ethereum v1.10.26-evmos-rc4
-	// use Realio sdk v0.46.11-realio-4
-	// github.com/cosmos/cosmos-sdk => github.com/realiotech/cosmos-sdk v0.46.11-realio-4
-	github.com/evmos/os/example_chain => github.com/evmos/os/example_chain v0.0.0-20241002122822-02a9121016ee
 
 	// github.com/realio-tech/multi-staking-module => ../multi-staking
 	// github.com/evmos/os => ../evmos-os
@@ -257,8 +256,7 @@ replace (
 	// use cosmos flavored protobufs
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 
-	github.com/realio-tech/multi-staking-module => github.com/decentrio/multi-staking v0.0.0-20241025035539-29cf83199609
-
+	github.com/realio-tech/multi-staking-module => github.com/decentrio/multi-staking v0.0.0-20250102152144-6dec45875ff8
 	// replace broken goleveldb
 	github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
 )
