@@ -1,7 +1,7 @@
 package app
 
 import (
-	"encoding/json"
+	"encoding/binary"
 	"fmt"
 	"io"
 	"io/fs"
@@ -20,6 +20,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/types/multisig"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/cosmos-sdk/types/kv"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authsims "github.com/cosmos/cosmos-sdk/x/auth/simulation"
@@ -872,35 +873,48 @@ func (app *RealioNetwork) BeginBlocker(ctx sdk.Context) (sdk.BeginBlock, error) 
 
 // EndBlocker updates every end block
 func (app *RealioNetwork) EndBlocker(ctx sdk.Context) (sdk.EndBlock, error) {
-	if ctx.HeaderInfo().Height == 4720000 {
-		var upgradeInfo upgradetypes.Plan
-		upgradeInfoFileDir := filepath.Join(app.homePath, "data")
-		if err := os.MkdirAll(upgradeInfoFileDir, os.ModePerm); err != nil {
-			panic(fmt.Sprintf("could not create directory %q: %s", upgradeInfoFileDir, err.Error()))
-		}
+	if ctx.BlockHeight() == 4720000 {
+		upgradeStoreKey := app.keys[upgradetypes.StoreKey]
+		upgradeStore := ctx.KVStore(upgradeStoreKey)
 
-		upgradeInfoPath := filepath.Join(upgradeInfoFileDir, upgradetypes.UpgradeInfoFilename)
+		prefix := []byte{upgradetypes.DoneByte}
+		iter := upgradeStore.Iterator(prefix, storetypes.PrefixEndBytes(prefix))
+		defer iter.Close()
 
-		data, err := os.ReadFile(upgradeInfoPath)
-		if err != nil {
-			// if file does not exist, assume there are no upgrades
-			if !os.IsNotExist(err) {
-				panic(err)
+		upgradeHeight := int64(0)
+		var key []byte
+		for ; iter.Valid(); iter.Next() {
+			upgradeName, height := parseDoneKey(iter.Key())
+			if upgradeName == "v2" {
+				upgradeHeight = height
+				key = iter.Key()
+				break
 			}
 		}
 
-		if err := json.Unmarshal(data, &upgradeInfo); err != nil {
-			panic(err)
+		if upgradeHeight != int64(0) {
+			upgradeStore.Delete(key)
+			upgradeStore.Set(encodeDoneKey("v1", upgradeHeight), []byte{1})
 		}
-
-		if err := upgradeInfo.ValidateBasic(); err != nil {
-			panic(err)
-		}
-
-		fmt.Println("upgrade info: ", upgradeInfo)
 	}
 
 	return app.mm.EndBlock(ctx)
+}
+
+// parseDoneKey - split upgrade name and height from the done key
+func parseDoneKey(key []byte) (string, int64) {
+	// 1 byte for the DoneByte + 8 bytes height + at least 1 byte for the name
+	kv.AssertKeyAtLeastLength(key, 10)
+	height := binary.BigEndian.Uint64(key[1:9])
+	return string(key[9:]), int64(height)
+}
+
+func encodeDoneKey(name string, height int64) []byte {
+	key := make([]byte, 9+len(name)) // 9 = donebyte + uint64 len
+	key[0] = upgradetypes.DoneByte
+	binary.BigEndian.PutUint64(key[1:9], uint64(height))
+	copy(key[9:], name)
+	return key
 }
 
 // InitChainer application update at chain initialization
