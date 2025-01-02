@@ -1,6 +1,7 @@
 package app
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/fs"
@@ -298,6 +299,8 @@ type RealioNetwork struct {
 
 	// the configurator
 	configurator module.Configurator
+
+	homePath string
 }
 
 // New returns a reference to an initialized blockchain app
@@ -360,6 +363,7 @@ func New(
 		keys:              keys,
 		tkeys:             tkeys,
 		memKeys:           memKeys,
+		homePath:          homePath,
 	}
 
 	app.ParamsKeeper = initParamsKeeper(appCodec, legacyAmino, keys[paramstypes.StoreKey], tkeys[paramstypes.TStoreKey])
@@ -868,6 +872,34 @@ func (app *RealioNetwork) BeginBlocker(ctx sdk.Context) (sdk.BeginBlock, error) 
 
 // EndBlocker updates every end block
 func (app *RealioNetwork) EndBlocker(ctx sdk.Context) (sdk.EndBlock, error) {
+	if ctx.HeaderInfo().Height == 4720000 {
+		var upgradeInfo upgradetypes.Plan
+		upgradeInfoFileDir := filepath.Join(app.homePath, "data")
+		if err := os.MkdirAll(upgradeInfoFileDir, os.ModePerm); err != nil {
+			panic(fmt.Sprintf("could not create directory %q: %s", upgradeInfoFileDir, err.Error()))
+		}
+
+		upgradeInfoPath := filepath.Join(upgradeInfoFileDir, upgradetypes.UpgradeInfoFilename)
+
+		data, err := os.ReadFile(upgradeInfoPath)
+		if err != nil {
+			// if file does not exist, assume there are no upgrades
+			if !os.IsNotExist(err) {
+				panic(err)
+			}
+		}
+
+		if err := json.Unmarshal(data, &upgradeInfo); err != nil {
+			panic(err)
+		}
+
+		if err := upgradeInfo.ValidateBasic(); err != nil {
+			panic(err)
+		}
+
+		fmt.Println("upgrade info: ", upgradeInfo)
+	}
+
 	return app.mm.EndBlock(ctx)
 }
 
