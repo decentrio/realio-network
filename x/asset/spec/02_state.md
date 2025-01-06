@@ -11,38 +11,35 @@ The `x/asset` module keeps the following objects in state:
 | State Object         | Description                    | Key                      | Value           | Store |
 |----------------------|--------------------------------|--------------------------| --------------- |-------|
 | `Token`              | Token bytecode                 | `[]byte{1} + []byte(id)` | `[]byte{token}` | KV    |
-| `TokenAuthorization` | Token Authorization bytecode   | `[]byte{2} + []byte(id)` | `[]byte(id)`    | KV    |
+| `Params`             | Params bytecode                | `[]byte{2} + []byte(id)` | `[]byte(id)`    | KV    |
 
-### Token 
+### Token
 
 Allows creation of tokens with optional user authorization.  
 
 ```go
 type Token struct {
-    Name                  string                         `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-    Symbol                string                         `protobuf:"bytes,2,opt,name=symbol,proto3" json:"symbol,omitempty"`
-    Total                 int64                          `protobuf:"varint,3,opt,name=total,proto3" json:"total,omitempty"`
-    Decimals              int64                          `protobuf:"varint,4,opt,name=decimals,proto3" json:"decimals,omitempty"`
-    AuthorizationRequired bool                           `protobuf:"varint,5,opt,name=authorizationRequired,proto3" json:"authorizationRequired,omitempty"`
-    Creator               string                         `protobuf:"bytes,6,opt,name=creator,proto3" json:"creator,omitempty"`
-    Authorized            map[string]*TokenAuthorization `protobuf:"bytes,7,rep,name=authorized,proto3" json:"authorized,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-    Created               int64                          `protobuf:"varint,8,opt,name=created,proto3" json:"created,omitempty"`
+    TokenId               string                `protobuf:"bytes,1,opt,name=token_id,json=tokenId,proto3" json:"token_id,omitempty"`
+    Issuer                string                `protobuf:"bytes,2,opt,name=issuer,proto3" json:"issuer,omitempty"`
+    Name                  string                `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+    Symbol                string                `protobuf:"bytes,4,opt,name=symbol,proto3" json:"symbol,omitempty"`
+    Decimals              uint32                `protobuf:"varint,5,opt,name=decimals,proto3" json:"decimals,omitempty"`
+    Description           string                `protobuf:"bytes,6,opt,name=description,proto3" json:"description,omitempty"`
+    Managers              []string              `protobuf:"bytes,7,rep,name=managers,proto3" json:"managers,omitempty"`
+    Distributors          []string              `protobuf:"bytes,8,rep,name=distributors,proto3" json:"distributors,omitempty"`
+    IsFreezed             bool                  `protobuf:"varint,9,opt,name=is_freezed,json=isFreezed,proto3" json:"is_freezed,omitempty"`
+    EvmSinglePresentation bool                  `protobuf:"varint,10,opt,name=evm_single_presentation,json=evmSinglePresentation,proto3" json:"evm_single_presentation,omitempty"`
+    DistributionSettings  DistributionSettings `protobuf:"bytes,11,opt,name=distribution_settings,json=distributionSettings,proto3" json:"distribution_settings,omitempty"`
 }
 ```
 
-### Token Authorization
-
-A Token authorization struct represents a single addresses current authorization state for a token
+### Params
 
 ```go
-type TokenAuthorization struct {
-    TokenSymbol string `protobuf:"bytes,1,opt,name=tokenSymbol,proto3" json:"tokenSymbol,omitempty"`
-    Address     string `protobuf:"bytes,2,opt,name=address,proto3" json:"address,omitempty"`
-    Authorized  bool   `protobuf:"varint,3,opt,name=authorized,proto3" json:"authorized,omitempty"`
+type Params struct {
+    AllowFunctionalities []string `protobuf:"bytes,1,rep,name=allow_functionalities,json=allowFunctionalities,proto3" json:"allow_functionalities,omitempty"`
 }
 ```
-
-
 
 ## Genesis State
 
