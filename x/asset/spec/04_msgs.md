@@ -17,7 +17,9 @@ order: 4
         Symbol                     string   
         Decimal                    uint32   
         Description                string 
-        SingleRepresentation       bool
+        EvmEnable                  bool
+        AllowNewFuctionalities     bool
+        FunctionalitiesList        [ ]string
     }
 ```
 
@@ -135,6 +137,8 @@ Example:
 
 ### 5. Mint
 
+This function only can be executed when the token's `FunctionalitiesList` has `mint` functionality.
+
 ```go
     type MsgMint struct {
         Distributor          address     
@@ -156,4 +160,16 @@ Distributor can change the max supply and mint ratelimit of the token.
     }
 ```
 
-### 7. UpdateParams
+### 7. UpdateFunctionalitiesList
+
+Manager can update the `FunctionalitiesList` of the token. This only can be executed when the token's `AllowNewFuctionalities` is enable.
+
+```go
+    type FunctionalitiesList struct {
+        Manager              address     
+        TokenId              string
+        NewFunctionalities   []string
+    }
+```
+
+### 8. UpdateParams

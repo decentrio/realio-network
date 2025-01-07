@@ -20,13 +20,18 @@ message Token {
   string description = 6;
   []address manager_addresses = 7;
   []address distributor_addresses = 8;
-  bool single_representation = 9;
-  bool is_freeze = 10;
-  DistributionSettings distribution_settings = 11;
+  bool evm_enable = 9;
+  bool allow_new_fuctionalities = 10;
+  []string functionalities_list = 11;
+  DistributionSettings distribution_settings = 12;
 }
 ```
 
 The `issuer` is the address that create token. They can control all informations about the token, define other whitelist roles likes `manager` and `distributor`. `issuer` also can enable the token's single evm representation mode, which is showed in [EVM precompiles](README.md#asset-module-and-erc-20-precompiles).
+
+When creating a new token, `issuer` can define that they accept new functionalities or not by setting `allow_new_fuctionalities`. If he allow it, the new functionality when upgrading chain will be automatically added to the `functionalities_list` and the `issuer` can adjust the `functionalities_list` by his will.
+
+By setting `allow_new_fuctionalities`, `issuer` can specify whether they accept new functionalities or not when creating a new token. If he permits it, when upgrading the chain, the new features will be automatically added to the `functionalities_list`and the `manager` can then modify the `functionalities_list` as he sees fit. Otherwise, the `manager` can not chaing the `functionalities_list`.
 
 ### Role
 
