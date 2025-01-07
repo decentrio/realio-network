@@ -10,3 +10,4 @@ The asset module contains the following parameters:
 |----------------------|----------|------------------------|
 | port                 | string   | "ario"                 |
 | AllowFunctionalities | []string | ["burn","freeze"]      |
+| WhitelistAddresses   | []address| ["realio1..."]         |
