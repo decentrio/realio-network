@@ -14,7 +14,7 @@ Functionality accounts of a token are accounts that can execute certain actions 
 
 In order for a functionality to integrate into the `Asset Module`. It has to implement the `Functionality` interface and has its implementation registered via the method `AddFunctionality`. Once that is done, we can make said functionality available onchain by executing `SoftwareUpgradeProposal` like a regular chain upgrade process.
 
-It's important to note that the token manager can choose what functionalities it wants to disable for its token Which is specified by the token manager when creating the token. After creating the token, all the enabled functionalities will be assigned to the token manager in default but the token manager can assign functionalities to different accounts later on.
+Currently, there are 2 type of functionality accounts: `manager` and `distributor`. Each can execute different functionalities. While `distributor` can control the `mint` functionality and custom the `DistributionSettings`, the `manager` can execute the other functionalities like `burn` or `freeze` and could modify the  `functionalities_list`. It's important to note that the `manager` can choose what functionalities it wants to disable for its token.
 
 ### EVM enable
 

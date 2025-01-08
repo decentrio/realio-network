@@ -16,13 +16,6 @@ The `x/asset` module keeps the following objects in state:
 | `TokenDistributor`   | TokenDistributor info of a denom       | `[]byte{4} + []byte(id)` | `[]byte{token_distributor}`| KV    |
 | `FrozenAddresses`    | Frozen Addresses bytecode              | `[]byte{5} + []byte(id)` | `[]byte{[]address}`        | KV    |
 
-### Params
-
-```go
-type Params struct {
-    AllowFunctionalities []string `protobuf:"bytes,1,rep,name=allow_functionalities,json=allowFunctionalities,proto3" json:"allow_functionalities,omitempty"`
-}
-```
 
 ### Token
 
