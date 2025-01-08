@@ -8,13 +8,21 @@ order: 2
 
 The `x/asset` module keeps the following objects in state:
 
-| State Object         | Description                    | Key                      | Value                      | Store |
-|----------------------|--------------------------------|--------------------------| ---------------------------|-------|
-| `Token`              | Token bytecode                 | `[]byte{1} + []byte(id)` | `[]byte{token}`            | KV    |
-| `TokenManager`       | TokenManager bytecode          | `[]byte{2} + []byte(id)` | `[]byte{token_manager}`    | KV    |
-| `TokenDistributor`   | TokenDistributor bytecode      | `[]byte{3} + []byte(id)` | `[]byte{token_distributor}`| KV    |
-| `FreezedAddresses`   | Addresses bytecode             | `[]byte{4} + []byte(id)` | `[]byte{[]address}`        | KV    |
-| `Params`             | Params bytecode                | `[]byte{5} + []byte(id)` | `[]byte(id)`               | KV    |
+| State Object         | Description                            | Key                      | Value                      | Store |
+|----------------------|----------------------------------------|--------------------------| ---------------------------|-------|
+| `Params`             | Params of asset module                 | `[]byte{1}`              | `[]byte(params)`           | KV    |
+| `Token`              | Token information                      | `[]byte{2} + []byte(id)` | `[]byte{token}`            | KV    |
+| `TokenManager`       | TokenManager info of a denom           | `[]byte{3} + []byte(id)` | `[]byte{token_manager}`    | KV    |
+| `TokenDistributor`   | TokenDistributor info of a denom       | `[]byte{4} + []byte(id)` | `[]byte{token_distributor}`| KV    |
+| `FrozenAddresses`    | Frozen Addresses bytecode              | `[]byte{5} + []byte(id)` | `[]byte{[]address}`        | KV    |
+
+### Params
+
+```go
+type Params struct {
+    AllowFunctionalities []string `protobuf:"bytes,1,rep,name=allow_functionalities,json=allowFunctionalities,proto3" json:"allow_functionalities,omitempty"`
+}
+```
 
 ### Token
 
@@ -30,6 +38,10 @@ type Token struct {
     Description            string               `protobuf:"bytes,6,opt,name=description,proto3" json:"description,omitempty"`
 }
 ```
+
+The token id for the token will be derived from the Issuer and the Symbol with the format of asset/{Issuer}/{Symbol-Lowercase}. This will allow 2 tokens to have the same name with different issuers.
+
+The `issuer` is the address that create token. They can control all informations about the token, define other whitelist roles likes `manager` and `distributor`. `issuer` also can enable the token's single evm representation mode, which is showed in [EVM precompiles](README.md#asset-module-and-erc-20-precompiles).
 
 ### TokenManager
 
@@ -51,19 +63,35 @@ type TokenManager struct{
 }
 ```
 
+By setting `allow_new_fuctionalities`, `issuer` can specify whether they accept new functionalities or not when creating a new token. If he permits it, when upgrading the chain, the new features will be automatically added to the `functionalities_list`and the `manager` can then modify the `functionalities_list` as he sees fit. Otherwise, the `manager` can not chaing the `functionalities_list`.
+
+### TokenDistributor
+
+```protobuf
+message TokenDistributor{
+  []address distributor_addresses = 2;
+  DistributionSettings distribution_settings = 5;
+}
+```
+
+### DistributionSettings
+
+```protobuf
+message DistributionSettings {
+  string max_supply = 1[(gogoproto.customtype) = "cosmossdk.io/math.Int"]; 
+  string max_ratelimit = 2[(gogoproto.customtype) = "cosmossdk.io/math.Int"];
+}
+```
+
+`max_supply` defines the maximum number of tokens can be minted.
+
+
 ### FreezedAddress
 
 List of addresses that is freezed by the manager. This only exists when the Token enable the `freeze` functionality. The addresses in list will not be able to execute any msg about the token.
 
-### Params
 
-```go
-type Params struct {
-    AllowFunctionalities []string `protobuf:"bytes,1,rep,name=allow_functionalities,json=allowFunctionalities,proto3" json:"allow_functionalities,omitempty"`
-}
-```
-
-## Genesis State
+<!-- ## Genesis State
 
 The `x/asset` module's `GenesisState` defines the state necessary for initializing the chain from a previous exported height. It contains the module parameters and the registered token pairs :
 
@@ -72,4 +100,4 @@ The `x/asset` module's `GenesisState` defines the state necessary for initializi
 type GenesisState struct {
     Params Params `protobuf:"bytes,1,opt,name=params,proto3" json:"params"`
 }
-```
+``` -->

@@ -1,5 +1,5 @@
 <!--
-order: 5
+order: 6
 -->
 
 # Logic
@@ -59,7 +59,7 @@ This flow will also work with `QueryHandler`, as long as we can unpack the `msg.
 
 ### Enable EVM interface
 
-The token includes a field named `evm_enable`, which allows it to integrate with the ERC20 standard and have an EVM-compatible contract address. This EVM address acts as an abstract interface layer that bypasses the typical logic within ERC20 or EVM contracts. Instead of executing logic directly in the contract, all actions are reflected to the `asset` module, where the token’s core state and functionalities are managed.
+The token includes a field named `evm_enable`, which allows it to integrate with the ERC20 standard and have an EVM-compatible contract address. This EVM address acts as an abstract interface layer that bypasses the typical logic within ERC20 or EVM contracts. Instead of executing logic directly in the contract, all actions are reflected to the `asset` module's predefined precompiles, where the token’s core state and functionalities are managed.
 
 The token itself exists as a coin within the bank state, maintaining its own logic and functionalities independently of any ERC20 or EVM contract logic. The ERC20 contract deployed on the EVM serves purely as an interface, with its logic effectively bypassed. When other EVM contracts interact with this interface, their requests are forwarded via JSON-RPC calls to the `asset` module, which directly handles and executes the necessary operations. This is achieved by creating a `dynamic precompile` when `evm_enable` is activated, ensuring that the token’s behavior aligns with its internal state while still providing compatibility with the EVM ecosystem.
 

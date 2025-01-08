@@ -13,7 +13,6 @@ order: 4
         Issuer                     address
         Managers                   [ ]address
         Distributors               [ ]address
-        ContractAddress            string
         Symbol                     string   
         Decimal                    uint32   
         Description                string 
@@ -40,13 +39,25 @@ Example token.json:
    {
       "Manager": ["realioabc..."],
       "Distributor": ["realioabc2..."],
-      "ContractAddress": "0x...",
       "Symbol": "riel",
       "Decimal": "rielio",
       "Description": "",
-      "SingleRepresentation": true,
+      "EvmEnable": true,
+      "AllowNewFuctionalities": true,
+      "FunctionalitiesList": [],
     }
 ```
+
+Validation:
+- Check if Creator is whitelisted. We only allow some certain accounts to create tokens, these accounts is determined via gov proposal.
+- Check if token has been created or not by iterating through all denom existing.
+- Sanity check on token info like decimal, description, 
+
+Flow:
+1. The denom for the token will be derived from Creator and Symbol with the format of asset/{Issuer}/{Symbol-Lowercase}
+2. If `EvmEnable` is true, create a dynamic precompiles for the token.
+3. Save the token basic information (name, symbol, decimal and description) in the x/bank metadata store
+4. Save the token management info and distribution info in the x/asset store.
 
 ## 2. AssignRoles
 
@@ -89,6 +100,15 @@ Example privilege.json:
         ]
     }
 ```
+
+Validation:
+- Check if token exists
+- Check if caller is issuer of the token
+- Check if manager doesn't exist in the current managers list of token
+- Check if distributor doesn't exist in the current distributor list of token
+
+Flow:
+1. 
 
 ## 3. UnassignRole
 

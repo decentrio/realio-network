@@ -6,60 +6,19 @@ order: 1
 
 ## The Realio Asset Token Model
 
-The Realio Asset module is centered aroumd a token model. It contains the following fields:
+The Realio Asset module is centered around a token model where certain whitelisted accounts can issue their own token. A token issued by this module will be managed by a set of privileged accounts. These privileged accounts are assigned role by the issuer of the asset.
 
-### Token
+### System of privileged accounts
 
-```protobuf
-message Token {
-  string token_id = 1;
-  string issuer = 2;
-  string name = 3;
-  string symbol = 4;
-  uint32 decimals = 5;
-  string description = 6;
-}
-```
+Privileged accounts of a token are accounts that can execute certain actions for that token. There're are several types of privileges, each has its own logic to define the actions which accounts of said type can execute. We wanna decouple the logic of these privileges from the `Asset module` logic, meaning that privileges will be defined in separate packages/modules, thus, developers can customize their type of privilege without modifying the `Asset Module`. Doing this allows our privileges system to be extensible while keeping the core logic of `Asset Module` untouched and simple, avoiding complicated migration when we expand our privileges system.
 
-The token id for the token will be derived from the Issuer and the Symbol with the format of asset/{Issuer}/{Symbol-Lowercase}. This will allow 2 tokens to have the same name with different issuers.
+In order for a privilege to integrate into the `Asset Module`. It has to implement the `Privilege` interface and has its implementation registered via the method `AddPrivilege`. Once that is done, we can make said privilege available onchain by executing `SoftwareUpgradeProposal` like a regular chain upgrade process.
 
-The `issuer` is the address that create token. They can control all informations about the token, define other whitelist roles likes `manager` and `distributor`. `issuer` also can enable the token's single evm representation mode, which is showed in [EVM precompiles](README.md#asset-module-and-erc-20-precompiles).
+It's important to note that the token manager can choose what privileges it wants to disable for its token Which is specified by the token manager when creating the token. After creating the token, all the enabled privileges will be assigned to the token manager in default but the token manager can assign privileges to different accounts later on.
 
-### Role
+### EVM enable
 
-In token model, each token has 2 roles which can execute different functionality. They are whitelisted address that is defined by the issuer of the token. While `distributor` can control the `mint` functionality and custom the `DistributionSettings`, the `manager` can execute the other functionalities like `burn` or `freeze` and could modify the  `functionalities_list`
+While it is useful to represent the token in bank module, enabling the token to be in action in evm environment is very convenient and pave the possibility of integrating new features into the ecosystem. 
 
-- "ROLE_UNSPECIFIED": 0
-- "ROLE_MANAGER": 1
-- "ROLE_DISTRIBUTOR": 2
+Each token can be enabled to work in the evm environment by the token manager, which means user can interact with the token through evm side like metamask or anyother evm wallet and more other protocol integrated in the future. Note that, token manager can disable or enable the token to be used in the evm environment.
 
-### TokenManager
-
-```protobuf
-message TokenManager {
-  []address manager_addresses = 1;
-  bool allow_new_fuctionalities = 2;
-  []string functionalities_list = 3;
-  bool evm_enable = 4;
-}
-```
-
-By setting `allow_new_fuctionalities`, `issuer` can specify whether they accept new functionalities or not when creating a new token. If he permits it, when upgrading the chain, the new features will be automatically added to the `functionalities_list`and the `manager` can then modify the `functionalities_list` as he sees fit. Otherwise, the `manager` can not chaing the `functionalities_list`.
-
-### TokenDistributor
-
-```protobuf
-message TokenDistributor{
-  []address distributor_addresses = 2;
-  DistributionSettings distribution_settings = 5;
-}
-```
-
-### DistributionSettings
-
-```protobuf
-message DistributionSettings {
-  string max_supply = 1[(gogoproto.customtype) = "cosmossdk.io/math.Int"]; 
-  string max_ratelimit = 2[(gogoproto.customtype) = "cosmossdk.io/math.Int"];
-}
-```
