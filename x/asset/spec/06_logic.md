@@ -29,7 +29,7 @@ This interface provides all the functionality necessary for a functionality, inc
 
 All the `FunctionalityMsg` of a functionality should return the name of that functionality when called `FunctionalityName()`. A message handler should handle all the `FunctionalityMsg` of that functionality.
 
-### Upgrade Priviliges
+### Upgrade Functionalities
 
 All functionalities are located in a seperate packages, for example: asset/functionalities, therefore the exentsion or upgrade of functionalities is unrelated to core logic of `Asset` module, all the modification and addition happen in only asset/functionalities package. The core Asset module does not need to be aware of the specifics of functionality handling. It interacts with functionalitys through defined interfaces or protocols.
 
