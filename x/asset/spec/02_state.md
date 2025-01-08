@@ -57,7 +57,7 @@ type TokenManager struct{
 ### TokenDistributor
 
 ```go
-type TokenManager struct{
+type TokenDistributor struct{
     Distributors           []string             `protobuf:"bytes,8,rep,name=distributors,proto3" json:"distributors,omitempty"`
     DistributionSettings   DistributionSettings `protobuf:"bytes,12,opt,name=distribution_settings,json=distributionSettings,proto3" json:"distribution_settings"`
 }
@@ -65,26 +65,17 @@ type TokenManager struct{
 
 By setting `allow_new_fuctionalities`, `issuer` can specify whether they accept new functionalities or not when creating a new token. If he permits it, when upgrading the chain, the new features will be automatically added to the `functionalities_list`and the `manager` can then modify the `functionalities_list` as he sees fit. Otherwise, the `manager` can not chaing the `functionalities_list`.
 
-### TokenDistributor
-
-```protobuf
-message TokenDistributor{
-  []address distributor_addresses = 2;
-  DistributionSettings distribution_settings = 5;
-}
-```
-
 ### DistributionSettings
 
-```protobuf
-message DistributionSettings {
-  string max_supply = 1[(gogoproto.customtype) = "cosmossdk.io/math.Int"]; 
-  string max_ratelimit = 2[(gogoproto.customtype) = "cosmossdk.io/math.Int"];
+```go
+type DistributionSettings struct{
+    MaxSupply           string
+    MaxRatelimit        string
 }
 ```
 
-`max_supply` defines the maximum number of tokens can be minted.
-
+`MaxSupply` defines the maximum number of tokens can be minted.
+`MaxRatelimit` defines the ratelimit of tokens can be minted per epoch (each epoch last 1 day).
 
 ### FreezedAddress
 

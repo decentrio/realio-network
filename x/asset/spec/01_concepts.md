@@ -18,7 +18,6 @@ It's important to note that the token manager can choose what functionalities it
 
 ### EVM enable
 
-While it is useful to represent the token in bank module, enabling the token to be in action in evm environment is very convenient and pave the possibility of integrating new features into the ecosystem. 
+While it is useful to represent the token in bank module, enabling the token to be in action in evm environment is very convenient and pave the possibility of integrating new features into the ecosystem.
 
 Each token can be enabled to work in the evm environment by the token manager, which means user can interact with the token through evm side like metamask or anyother evm wallet and more other protocol integrated in the future. Note that, token manager can disable or enable the token to be used in the evm environment.
-
