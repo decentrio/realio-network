@@ -52,11 +52,11 @@ can only be called from Asset Module side.
 
 1. **[Concept](01_concepts.md)**
 2. **[State](02_state.md)**
-    - [Minter](02_state.md#minter)
-    - [Params](02_state.md#params)
+   - [Minter](02_state.md#minter)
+   - [Params](02_state.md#params)
 3. **[Parameters](03_params.md)**
 4. **[Messages](04_msgs.md)**
 5. **[Client](05_client.md)**
-    - [CLI](05_client.md#cli)
-    - [gRPC](05_client.md#grpc)
-    - [REST](05_client.md#rest)
+   - [CLI](05_client.md#cli)
+   - [gRPC](05_client.md#grpc)
+   - [REST](05_client.md#rest)

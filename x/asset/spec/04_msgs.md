@@ -6,7 +6,7 @@ order: 4
 
 ## 1. MsgIssueToken
 
-`MsgIssueToken` allow issuer to create token.
+`MsgIssueToken` allow issuer to create token. The issuer must be in param's whitelist addresses to be able to execute this msg.
 
 ```go
     type MsgIssueToken struct {
@@ -117,23 +117,19 @@ After setting the managers, the managers can execute their allowed functionality
     }
 ```
 
-CLI:
+### Flow
 
-```bash
-    realio-networkd tx execute-functionality [contract-address] [msg.json] [flags]
-```
+Validation:
 
-Example:
+- Checks if the token specified in the msg exists.
+- Checks if the functionality is supported.
+- Checks if the `Msg.Address` has the corresponding `Functionality` specified by `FunctionalityMsg.NeedFunctionality()`
 
-```bash
-    realio-networkd tx execute-functionality 0x... msg.json --from mykey
-```
+Flow:
 
-```json
-{
-  "FreezeMsg": {}
-}
-```
+- Prepare store for the functionality of the token via `MakeFunctionalityStore(functionality name, token denom)`. That store is the only store accessable by the functionality's `MsgHandler`.
+- `FunctionalityMsgRouting` routes the `FunctionalityMsg` to the its `MsgHandler`.
+- `MsgHandler` now handles the `FunctionalityMsg`.
 
 ### 5. Mint
 
