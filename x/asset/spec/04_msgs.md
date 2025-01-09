@@ -17,8 +17,8 @@ order: 4
         Decimal                    uint32   
         Description                string 
         EvmEnable                  bool
-        AllowNewFuctionalities     bool
-        FunctionalitiesList        [ ]string
+        AllowNewExtensions     bool
+        ExtensionsList             [ ]string
     }
 ```
 
@@ -43,17 +43,19 @@ Example token.json:
       "Decimal": "rielio",
       "Description": "",
       "EvmEnable": true,
-      "AllowNewFuctionalities": true,
-      "FunctionalitiesList": [],
+      "AllowNewExtensions": true,
+      "ExtensionsList": [],
     }
 ```
 
 Validation:
+
 - Check if Creator is whitelisted. We only allow some certain accounts to create tokens, these accounts is determined via gov proposal.
 - Check if token has been created or not by iterating through all denom existing.
-- Sanity check on token info like decimal, description, 
+- Sanity check on token info like decimal, description
 
 Flow:
+
 1. The denom for the token will be derived from Creator and Symbol with the format of asset/{Issuer}/{Symbol-Lowercase}
 2. If `EvmEnable` is true, create a dynamic precompiles for the token.
 3. Save the token basic information (name, symbol, decimal and description) in the x/bank metadata store
@@ -102,13 +104,17 @@ Example privilege.json:
 ```
 
 Validation:
+
 - Check if token exists
 - Check if caller is issuer of the token
+- Check if addresses is valid
 - Check if manager doesn't exist in the current managers list of token
 - Check if distributor doesn't exist in the current distributor list of token
 
 Flow:
-1. 
+
+- Get `TokenManager` and `TokenDistributor` from store by token_id
+- Loop through addresses and append manager addresses to `TokenManager.Managers`, distributor addresses to `TokenDistributor.Distributors`
 
 ## 3. UnassignRole
 
@@ -125,35 +131,45 @@ Flow:
     }
 ```
 
-## 4. ExecuteFunctionality
+Validation:
 
-After setting the managers, the managers can execute their allowed functionality.
+- Check if token exists
+- Check if caller is issuer of the token
+- Check if addresses is valid
+- Check if addresses is in `TokenManager.Managers` or `TokenDistributor.Distributors`
+
+Flow:
+
+- Get `TokenManager` and `TokenDistributor` from store by token_id
+- Loop through addresses and remove manager addresses from `TokenManager.Managers`, distributor addresses to `TokenDistributor.Distributors`
+
+## 4. ExecuteExtension
+
+After setting the managers, the managers can execute their allowed extension.
 
 ```go
-    type MsgExecuteFunctionality struct {
+    type MsgExecuteExtension struct {
         Manager              address     
         TokenId              string     
-        FunctionalityMsg     *types.Any
+        ExtensionMsg     *types.Any
     }
 ```
-
-### Flow
 
 Validation:
 
 - Checks if the token specified in the msg exists.
-- Checks if the functionality is supported.
-- Checks if the `Msg.Address` has the corresponding `Functionality` specified by `FunctionalityMsg.NeedFunctionality()`
+- Checks if the extension is supported.
+- Checks if the `Msg.Address` has the corresponding `Extension` specified by `ExtensionMsg.NeedExtension()`
 
 Flow:
 
-- Prepare store for the functionality of the token via `MakeFunctionalityStore(functionality name, token denom)`. That store is the only store accessable by the functionality's `MsgHandler`.
-- `FunctionalityMsgRouting` routes the `FunctionalityMsg` to the its `MsgHandler`.
-- `MsgHandler` now handles the `FunctionalityMsg`.
+- Prepare store for the extension of the token via `MakeExtensionStore(extension name, token denom)`. That store is the only store accessable by the extension's `MsgHandler`.
+- `ExtensionMsgRouting` routes the `ExtensionMsg` to the its `MsgHandler`.
+- `MsgHandler` now handles the `ExtensionMsg`.
 
 ### 5. Mint
 
-This function only can be executed when the token's `FunctionalitiesList` has `mint` functionality.
+This msg only can be executed when the token's `ExtensionsList` has `mint` extension.
 
 ```go
     type MsgMint struct {
@@ -163,6 +179,20 @@ This function only can be executed when the token's `FunctionalitiesList` has `m
         Amount               math.Int
     }
 ```
+
+Validation:
+
+- Checks if the token specified in the msg exists.
+- Checks if the extension is supported.
+- Check if addresses is valid
+- Checks if the distributor address is in `TokenDistributor.Distributors`
+- Checks if mint amount exceed `MaxSupply` or `MaxRatelimit`.
+
+Flow:
+
+- Get `TokenDistributor` from store by token_id
+- Mint the asset for corresponding reciever
+- Increase the ratelimit
 
 ### 6. UpdateDistributionSetting
 
@@ -176,16 +206,29 @@ Distributor can change the max supply and mint ratelimit of the token.
     }
 ```
 
-### 7. UpdateFunctionalitiesList
+Validation:
 
-Manager can update the `FunctionalitiesList` of the token. This only can be executed when the token's `AllowNewFuctionalities` is enable.
+- Checks if the token specified in the msg exists.
+- Checks if the extension is supported.
+- Checks if the distributor address is in `TokenDistributor.Distributors`
+- Checks if current supply exceed new settings `MaxSupply`
+
+### 7. UpdateExtensionsList
+
+Manager can update the `ExtensionsList` of the token. This only can be executed when the token's `AllowNewExtensions` is enable.
 
 ```go
-    type FunctionalitiesList struct {
+    type ExtensionsList struct {
         Manager              address     
         TokenId              string
-        NewFunctionalities   []string
+        NewExtensions   []string
     }
 ```
+
+Validation:
+
+- Checks if the token specified in the msg exists.
+- Checks if manager addresses is in `TokenManager.Managers`
+- Checks if the new extension is supported.
 
 ### 8. UpdateParams

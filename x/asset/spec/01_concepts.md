@@ -8,13 +8,13 @@ order: 1
 
 The Realio Asset module is centered around a token model where certain whitelisted accounts can issue their own token. A token issued by this module will be managed by a set of `manager` and `distributor` accounts. These accounts are assigned role by the issuer of the asset.
 
-### System of functionality accounts
+### System of privileged accounts
 
-Functionality accounts of a token are accounts that can execute certain actions for that token. There're are several types of functionalities, each has its own logic to define the actions which accounts of said type can execute. We wanna decouple the logic of these functionalities from the `Asset module` logic, meaning that functionalities will be defined in separate packages/modules, thus, developers can customize their type of functionality without modifying the `Asset Module`. Doing this allows our functionalities system to be extensible while keeping the core logic of `Asset Module` untouched and simple, avoiding complicated migration when we expand our functionalities system.
+Privileged accounts of a token are accounts that can execute certain actions for that token. There're are several types of extensions, each has its own logic to define the actions which accounts of said type can execute. We wanna decouple the logic of these extensions from the `Asset module` logic, meaning that extensions will be defined in separate packages/modules, thus, developers can customize their type of extension without modifying the `Asset Module`. Doing this allows our extensions system to be extensible while keeping the core logic of `Asset Module` untouched and simple, avoiding complicated migration when we expand our extensions system.
 
-In order for a functionality to integrate into the `Asset Module`. It has to implement the `Functionality` interface and has its implementation registered via the method `AddFunctionality`. Once that is done, we can make said functionality available onchain by executing `SoftwareUpgradeProposal` like a regular chain upgrade process.
+In order for a extension to integrate into the `Asset Module`. It has to implement the `Extension` interface and has its implementation registered via the method `AddExtension`. Once that is done, we can make said extension available onchain by executing `SoftwareUpgradeProposal` like a regular chain upgrade process.
 
-Currently, there are 2 type of functionality accounts: `manager` and `distributor`. Each can execute different functionalities. While `distributor` can control the `mint` functionality and custom the `DistributionSettings`, the `manager` can execute the other functionalities like `burn` or `freeze` and could modify the  `functionalities_list`. It's important to note that the `manager` can choose what functionalities it wants to disable for its token.
+Currently, there are 2 type of privileged accounts: `manager` and `distributor`. Each can execute different extensions. While `distributor` can control the `mint` extension and custom the `DistributionSettings`, the `manager` can execute the other extensions like `burn` or `freeze` and could modify the  `extensions_list`. It's important to note that the `manager` can choose what extensions it wants to disable for its token.
 
 ### EVM enable
 

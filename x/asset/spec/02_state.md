@@ -16,7 +16,6 @@ The `x/asset` module keeps the following objects in state:
 | `TokenDistributor`   | TokenDistributor info of a denom       | `[]byte{4} + []byte(id)` | `[]byte{token_distributor}`| KV    |
 | `FrozenAddresses`    | Frozen Addresses bytecode              | `[]byte{5} + []byte(id)` | `[]byte{[]address}`        | KV    |
 
-
 ### Token
 
 Allows creation of tokens with optional user authorization.  
@@ -41,11 +40,13 @@ The `issuer` is the address that create token. They can control all informations
 ```go
 type TokenManager struct{
     Managers               []string             `protobuf:"bytes,7,rep,name=managers,proto3" json:"managers,omitempty"`
-    AllowNewFuctionalities bool                 `protobuf:"varint,10,opt,name=allow_new_fuctionalities,json=allowNewFuctionalities,proto3" json:"allow_new_fuctionalities,omitempty"`
-    FunctionalitiesList    []string             `protobuf:"bytes,11,rep,name=functionalities_list,json=functionalitiesList,proto3" json:"functionalities_list,omitempty"`
+    AllowNewExtensions bool                 `protobuf:"varint,10,opt,name=allow_new_Extensions,json=allowNewExtensions,proto3" json:"allow_new_Extensions,omitempty"`
+    ExtensionsList    []string             `protobuf:"bytes,11,rep,name=extensions_list,json=extensionsList,proto3" json:"extensions_list,omitempty"`
     EvmEnable              bool                 `protobuf:"varint,9,opt,name=evm_enable,json=evmEnable,proto3" json:"evm_enable,omitempty"`
    }
 ```
+
+By setting `allow_new_extensions`, `issuer` can specify whether they accept new extensions or not when creating a new token. If he permits it, when upgrading the chain, the new features will be automatically added to the `extensions_list`and the `manager` can then modify the `extensions_list` as he sees fit. Otherwise, the `manager` can not chaing the `extensions_list`.
 
 ### TokenDistributor
 
@@ -56,32 +57,18 @@ type TokenDistributor struct{
 }
 ```
 
-By setting `allow_new_fuctionalities`, `issuer` can specify whether they accept new functionalities or not when creating a new token. If he permits it, when upgrading the chain, the new features will be automatically added to the `functionalities_list`and the `manager` can then modify the `functionalities_list` as he sees fit. Otherwise, the `manager` can not chaing the `functionalities_list`.
-
 ### DistributionSettings
 
 ```go
 type DistributionSettings struct{
-    MaxSupply           string
-    MaxRatelimit        string
+    MaxSupply           math.Int
+    MaxRatelimit        math.Int
 }
 ```
 
 `MaxSupply` defines the maximum number of tokens can be minted.
 `MaxRatelimit` defines the ratelimit of tokens can be minted per epoch (each epoch last 1 day).
 
-### FreezedAddress
+### FrozenAddress
 
-List of addresses that is freezed by the manager. This only exists when the Token enable the `freeze` functionality. The addresses in list will not be able to execute any msg about the token.
-
-
-<!-- ## Genesis State
-
-The `x/asset` module's `GenesisState` defines the state necessary for initializing the chain from a previous exported height. It contains the module parameters and the registered token pairs :
-
-```go
-// GenesisState defines the module's genesis state.
-type GenesisState struct {
-    Params Params `protobuf:"bytes,1,opt,name=params,proto3" json:"params"`
-}
-``` -->
+List of addresses that is frozen by the manager. This only exists when the Token enable the `freeze` functionality. The addresses in list will not be able to execute any msg about the token.
