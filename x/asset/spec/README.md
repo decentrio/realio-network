@@ -11,9 +11,9 @@ parent:
 
 The Realio Asset module is centered around a token model where certain whitelisted accounts can issue their own token. A token issued by this module will be managed by two different roles, manager and distributor. These roles can be assigned to arbitrary accounts (could be either user accounts or module/contract account) by the token issuer.
 
-Each token can choose to enable functionalities supported by the module. Currently, there are four functionalities supported: "mint", "freeze", "clawback", "transfer_auth", each handle a completely different logic. We wanna decouple the logic of these functionalities from the `Asset module`, meaning that they will be defined in separate packages/modules, thus, developers can customize new functionalities without modifying the `Asset Module`. Doing this allows our token model to be extensible while keeping the core logic of `Asset Module` untouched and simple, avoiding complicated migration when we integrating new features.
+Each token can choose to enable extensions supported by the module. Currently, there are four extensions supported: "mint", "freeze", "clawback", "transfer_auth", each handle a completely different logic. We wanna decouple the logic of these extensions from the `Asset module`, meaning that they will be defined in separate packages/modules, thus, developers can customize new extensions without modifying the `Asset Module`. Doing this allows our token model to be extensible while keeping the core logic of `Asset Module` untouched and simple, avoiding complicated migration when we integrating new features.
 
-The token manager's task is to choose what functionalities it wants to disable/enable for its token; and only the token manager can trigger those functionalities, except for the `mint` functionality which is handled by the `distributor`.
+The token manager's task is to choose what extensions it wants to disable/enable for its token; and only the token manager can trigger those extensions, except for the `mint` extension which is handled by the `distributor`.
 
 ![asset_module](imgs/asset_module.png)
 
@@ -27,9 +27,9 @@ To link an asset to ERC20 Precompile, user have to create a gov proposal so that
 
 ![asset_precompiles](imgs/asset_precompiles.png)
 
-### Mapping functions
+### Mapping extensions
 
-ERC20 precompiles come with a limited number of functions which are:
+ERC20 precompiles come with a limited number of extensions which are:
 
 - Transfer
 - TransferFrom
@@ -37,9 +37,9 @@ ERC20 precompiles come with a limited number of functions which are:
 - IncreaseAllowance
 - DecreaseAllowance
 
-These functions can be called from both AssetModule and EVM side (by metamask for example).
+These extensions can be called from both AssetModule and EVM side (by metamask for example).
 
-Other functions like:
+Other extensions like:
 
 - Mint
 - Burn
@@ -52,11 +52,15 @@ can only be called from Asset Module side.
 
 1. **[Concept](01_concepts.md)**
 2. **[State](02_state.md)**
-   - [Minter](02_state.md#minter)
-   - [Params](02_state.md#params)
+   - [Token](02_state.md#token)
+   - [TokenManagement](02_state.md#tokenmanagement)
+   - [TokenDistribution](02_state.md#tokendistribution)
+   - [WhitelistAddresses](02_state.md#whitelistaddresses)
+   - [DynamicPrecompiles](02_state.md#dynamicprecompiles)
 3. **[Parameters](03_params.md)**
 4. **[Messages](04_msgs.md)**
-5. **[Client](05_client.md)**
-   - [CLI](05_client.md#cli)
-   - [gRPC](05_client.md#grpc)
-   - [REST](05_client.md#rest)
+5. **[Query](05_query.md)**
+6. **[Logic](06_logic.md)**
+   - [Extension](06_logic.md#extension)
+   - [EVM interaction](06_logic.md#evm-interaction)
+   

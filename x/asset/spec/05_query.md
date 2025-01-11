@@ -79,24 +79,3 @@ CLI:
 ```bash
     realio-networkd q all-tokens
 ```
-
-## 4. QueryFrozenAddresses
-
-The `QueryFrozenAddresses` allows users to query all frozen addresses
-
-```go
-    type QueryFrozenAddressesRequest struct {
-    }
-```
-
-```go
-    type QueryFrozenAddressesResponse struct {
-        FrozenAddresses []address
-    }
-```
-
-CLI:
-
-```bash
-    realio-networkd q frozen-addresses
-```
