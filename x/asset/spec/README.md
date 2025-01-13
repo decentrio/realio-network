@@ -15,7 +15,7 @@ Each token can choose to enable extensions supported by the module. Currently, t
 
 The token manager's task is to choose what extensions it wants to disable/enable for its token; and only the token manager can trigger those extensions, except for the `mint` extension which is handled by the `distributor`.
 
-![asset_module](imgs/asset_module.png)
+![asset_module](imgs/asset_module.png)`
 
 ## Asset Module and ERC-20 Precompiles
 
@@ -23,9 +23,9 @@ ERC-20 precompiles are offered by evmOS for better interacting with Cosmos SDK. 
 
 ### Link Asset to Precompiles
 
-To link an asset to ERC20 Precompile, user have to create a gov proposal so that Asset Module can interact with ERC-20 module to registerERC20 and change their params (`Dynamic Precompiles` field). After linking, all call to the token contract will now redirect to precompile instead of the evm.
+To link an asset to ERC20 Precompile, when issuer send the MsgIssueToken to the Asset Module, a new asset will be created and a new evm address is created randomly, which will be auto assigned an erc20-precompiles to interact with evm environment. After linking, all call to the token contract will now redirect to precompile instead of the evm.
 
-![asset_precompiles](imgs/asset_precompiles.png)
+![asset_precompiles](imgs/linking_precompiles.png)
 
 ### Mapping extensions
 
@@ -37,14 +37,12 @@ ERC20 precompiles come with a limited number of extensions which are:
 - IncreaseAllowance
 - DecreaseAllowance
 
-These extensions can be called from both AssetModule and EVM side (by metamask for example).
-
-Other extensions like:
+We introduce additional extensions on these standard extensions:
 
 - Mint
 - Burn
 
-can only be called from Asset Module side.
+All above extensions can be called from both AssetModule and EVM side (by metamask for example).
 
 ![asset_evm](imgs/asset_evm.png)
 

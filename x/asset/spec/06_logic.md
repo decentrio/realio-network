@@ -20,9 +20,9 @@ type Extension interface {
     CLI() *cobra.Command
 }
 
-type MsgHandler func(context Context, funcMsg ExtensionMsg) error
+type MsgHandler func(context Context, extensionStore store.KVStore, funcMsg ExtensionMsg) error
 
-type QueryHandler func(context Context, funcQuery ExtensionMsg) error
+type QueryHandler func(context Context, extensionStore store.KVStore, funcQuery ExtensionMsg) error
 ```
 
 This interface provides all the extension necessary for a extension, including a message handler, query handler and cli.
@@ -57,12 +57,18 @@ This flow will also work with `QueryHandler`, as long as we can unpack the `msg.
 
 ### Extension Store
 
+Each extension has its own store, which can be used in that extension execute or query operations. The store will be passed to the extension each time the extension is executed and altered on execution. 
+
+This structure help the extension achieve the isolation characteristic of the store, which helps maintain modularity and reduces the risk of unintended interactions or dependencies between extensions.
+
 ## EVM interaction
 
-### Enable EVM interface
+### EVM interface
 
-The token includes a field named `evm_enable`, which allows it to integrate with the ERC20 standard and have an EVM-compatible contract address. This EVM address acts as an abstract interface layer that bypasses the typical logic within ERC20 or EVM contracts. Instead of executing logic directly in the contract, all actions are reflected to the `asset` module's predefined precompiles, where the token’s core state and extensions are managed.
+On token creation, all token will be linked to a erc20-precompiles, which allows it to integrate with the ERC20 standard and have an EVM-compatible contract address. This EVM address acts as an abstract interface layer that bypasses the typical logic within ERC20 or EVM contracts. Instead of executing logic directly in the contract, all actions are reflected to the `asset` module's predefined precompiles, where the token’s core state and extensions are managed.
 
-The token itself exists as a coin within the bank state, maintaining its own logic and extensions independently of any ERC20 or EVM contract logic. The ERC20 contract deployed on the EVM serves purely as an interface, with its logic effectively bypassed. When other EVM contracts interact with this interface, their requests are forwarded via JSON-RPC calls to the `asset` module, which directly handles and executes the necessary operations. This is achieved by creating a `dynamic precompile` when `evm_enable` is activated, ensuring that the token’s behavior aligns with its internal state while still providing compatibility with the EVM ecosystem.
+The token itself exists as a coin within the bank state, maintaining its own logic and extensions independently of any ERC20 or EVM contract logic. The ERC20 contract deployed on the EVM serves purely as an interface, with its logic effectively bypassed. When other EVM contracts interact with this interface, their requests are forwarded via JSON-RPC calls to the `asset` module, which directly handles and executes the necessary operations. This is achieved by creating a `dynamic precompile`, ensuring that the token’s behavior aligns with its internal state while still providing compatibility with the EVM ecosystem.
 
 ### ERC20 Precompiles
+
+

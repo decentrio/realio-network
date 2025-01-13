@@ -16,7 +16,6 @@ order: 4
         Symbol                     string   
         Decimal                    uint32   
         Description                string 
-        EvmEnable                  bool
         AllowNewExtensions     bool
         ExtensionsList             [ ]string
     }
@@ -40,9 +39,8 @@ Example token.json:
       "Manager": ["realioabc..."],
       "Distributor": ["realioabc2..."],
       "Symbol": "riel",
-      "Decimal": "rielio",
+      "Decimal": 18,
       "Description": "",
-      "EvmEnable": true,
       "AllowNewExtensions": true,
       "ExtensionsList": [],
     }
@@ -56,8 +54,9 @@ Validation:
 
 Flow:
 
-1. The denom for the token will be derived from Creator and Symbol with the format of asset/{Issuer}/{Symbol-Lowercase}
-2. If `EvmEnable` is true, create a dynamic precompiles for the token.
+1. The token-id for the token will be derived from Creator and Symbol with the format of asset/{Issuer}/{Symbol-Lowercase}
+2. Create a evm address for the asset. 
+3. Create a dynamic precompiles linking to the newly created evm address.
 3. Save the token basic information (name, symbol, decimal and description) in the x/bank metadata store
 4. Save the token management info and distribution info in the x/asset store.
 
@@ -191,12 +190,12 @@ Validation:
 Flow:
 
 - Get `TokenDistributor` from store by token_id
-- Mint the asset for corresponding reciever
-- Increase the ratelimit
+- Mint the asset for corresponding receiver
+- Increase the Maxsupply in TokenDistribution store.
 
 ### 6. UpdateDistributionSetting
 
-Distributor can change the max supply and mint ratelimit of the token.
+Distributor can change the max supply of the token.
 
 ```go
     type MsgUpdateDistributionSetting struct {
