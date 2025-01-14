@@ -116,10 +116,10 @@ Flow:
 - Get `TokenManager` and `TokenDistributor` from store by token_id
 - Loop through addresses and append manager addresses to `TokenManager.Managers`, distributor addresses to `TokenDistributor.Distributors`
 
-## 3. UnassignRole
+## 3. UnassignRoles
 
 ```go
-    type MsgUnassignRole struct {
+    type MsgUnassignRoles struct {
         TokenId         string
         Issuer          address
         Assigners       []address
@@ -127,7 +127,7 @@ Flow:
 ```
 
 ```go
-    type MsgUnassignRoleResponse struct {
+    type MsgUnassignRolesResponse struct {
     }
 ```
 

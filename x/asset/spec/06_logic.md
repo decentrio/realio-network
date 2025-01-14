@@ -73,9 +73,18 @@ The token itself exists as a coin within the bank state, maintaining its own log
 
 EVM precompiles are EVM interface contracts with state access. These smart contracts can directly interact with Cosmos SDK modules, enabling their own operations while also interacting with the EVM state and other SDK modules.
 
-In `asset` module, there are 2 evm precompiles contracts: `ITokenIssuer.sol` corresponding to `token-issuer` precompile and `IERC20Extension.sol` corresponding to `erc20` precompile.
+In `asset` module, there are 2 evm precompiles contracts: `IAsset.sol` corresponding to `asset` precompile and `IERC20Extensions.sol` corresponding to `erc20` precompile.
 
-The `token-issuer` precompile provides a single function in `ITokenIssuer.sol` that enables other contracts or users to create an ERC20 token. The function is defined as follows:
+The `IAsset.sol` is an interface through which Solidity contracts can interact with Realio asset module. This is convenient for developers as they don’t need to know the implementation details behind the `x/asset` module in the Realio Network. Instead, they can interact with `asset` functions using the Ethereum interface they are familiar with.
+
+`asset` precompile provides several functions:
+
+- `issueToken` enables other contracts or users to create an ERC20 token.
+- `updateExtensionsList` allow token manager to interact to `asset` module and update the extensions list.
+- `assignRoles` allow token issuer to assign role for token.
+- `unassignRoles` allow token issuer to unassign role for token.
+
+The functions is defined as follows:
 
 ```solidity
     function issueToken(
@@ -86,13 +95,24 @@ The `token-issuer` precompile provides a single function in `ITokenIssuer.sol` t
         bool allowNewExtensions,
         string[] memory extensionsList
     ) external returns (bool success, address contractAddress);
+
+    function updateExtensionsList(string memory tokenId, string[] memory newExtensionsList) public;
+
+    struct Role {
+        uint8 role; // 1 represent manager, 2 represent distributor
+        address account;
+    }
+
+    function assignRoles(string memory tokenId, Role[] roles) public;
+
+    function unassignRoles(string memory tokenId, address[] accounts) public;
 ```
 
 When this function is called, the token-issuer precompile forwards the request to the asset module, invoking the IssueToken function within the module to handle the token creation process.
 
-On the other hand, the `erc20` precompile acts as the ERC20 interface for all tokens managed by the asset module. It implements all standard ERC20 functions as defined in `IERC20Extension.sol`, including `transfer`, `transferFrom`, `approve`, `increaseAllowance`, and `decreaseAllowance`.
+On the other hand, the `erc20` precompile acts as the ERC20 interface for all tokens managed by the asset module. It implements all standard ERC20 functions as defined in `IERC20Extensions.sol`, including `transfer`, `transferFrom`, `approve`, `increaseAllowance`, and `decreaseAllowance`.
 
-Additionally, the `IERC20Extension.sol` contract provides extra methods to support interactions with other extensions, enabling more advanced functionality:
+Additionally, the `IERC20Extensions.sol` contract provides extra methods to support interactions with other extensions, enabling more advanced functionality:
 
 ```solidity
     function mint(address to, uint256 amount) public;
@@ -101,6 +121,4 @@ Additionally, the `IERC20Extension.sol` contract provides extra methods to suppo
     function burnFrom(address account, uint256 value) public;
 
     function freeze(address account) public;
-
-    function updateExtensionList(string[] memory newExtensionsList) public;
 ```

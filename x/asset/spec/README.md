@@ -61,4 +61,3 @@ All above extensions can be called from both AssetModule and EVM side (by metama
 6. **[Logic](06_logic.md)**
    - [Extension](06_logic.md#extension)
    - [EVM interaction](06_logic.md#evm-interaction)
-   
