@@ -57,7 +57,7 @@ This flow will also work with `QueryHandler`, as long as we can unpack the `msg.
 
 ### Extension Store
 
-Each extension has its own store, which can be used in that extension execute or query operations. The store will be passed to the extension each time the extension is executed and altered on execution. 
+Each extension has its own store, which can be used in that extension execute or query operations. The store will be passed to the extension each time the extension is executed and altered on execution.
 
 This structure help the extension achieve the isolation characteristic of the store, which helps maintain modularity and reduces the risk of unintended interactions or dependencies between extensions.
 
@@ -69,6 +69,38 @@ On token creation, all token will be linked to a erc20-precompiles, which allows
 
 The token itself exists as a coin within the bank state, maintaining its own logic and extensions independently of any ERC20 or EVM contract logic. The ERC20 contract deployed on the EVM serves purely as an interface, with its logic effectively bypassed. When other EVM contracts interact with this interface, their requests are forwarded via JSON-RPC calls to the `asset` module, which directly handles and executes the necessary operations. This is achieved by creating a `dynamic precompile`, ensuring that the token’s behavior aligns with its internal state while still providing compatibility with the EVM ecosystem.
 
-### ERC20 Precompiles
+### EVM Precompiles
 
+EVM precompiles are EVM interface contracts with state access. These smart contracts can directly interact with Cosmos SDK modules, enabling their own operations while also interacting with the EVM state and other SDK modules.
 
+In `asset` module, there are 2 evm precompiles contracts: `ITokenIssuer.sol` corresponding to `token-issuer` precompile and `IERC20Extension.sol` corresponding to `erc20` precompile.
+
+The `token-issuer` precompile provides a single function in `ITokenIssuer.sol` that enables other contracts or users to create an ERC20 token. The function is defined as follows:
+
+```solidity
+    function issueToken(
+        address issuerAddress,
+        string memory name, 
+        string memory symbol,
+        uint8 deciaml,
+        bool allowNewExtensions,
+        string[] memory extensionsList
+    ) external returns (bool success, address contractAddress);
+```
+
+When this function is called, the token-issuer precompile forwards the request to the asset module, invoking the IssueToken function within the module to handle the token creation process.
+
+On the other hand, the `erc20` precompile acts as the ERC20 interface for all tokens managed by the asset module. It implements all standard ERC20 functions as defined in `IERC20Extension.sol`, including `transfer`, `transferFrom`, `approve`, `increaseAllowance`, and `decreaseAllowance`.
+
+Additionally, the `IERC20Extension.sol` contract provides extra methods to support interactions with other extensions, enabling more advanced functionality:
+
+```solidity
+    function mint(address to, uint256 amount) public;
+
+    function burn(uint256 value) public;
+    function burnFrom(address account, uint256 value) public;
+
+    function freeze(address account) public;
+
+    function updateExtensionList(string[] memory newExtensionsList) public;
+```

@@ -13,10 +13,11 @@ order: 4
         Issuer                     address
         Managers                   [ ]address
         Distributors               [ ]address
+        Name                       string   
         Symbol                     string   
         Decimal                    uint32   
         Description                string 
-        AllowNewExtensions     bool
+        AllowNewExtensions         bool
         ExtensionsList             [ ]string
     }
 ```
@@ -55,10 +56,10 @@ Validation:
 Flow:
 
 1. The token-id for the token will be derived from Creator and Symbol with the format of asset/{Issuer}/{Symbol-Lowercase}
-2. Create a evm address for the asset. 
+2. Create a evm address for the asset.
 3. Create a dynamic precompiles linking to the newly created evm address.
-3. Save the token basic information (name, symbol, decimal and description) in the x/bank metadata store
-4. Save the token management info and distribution info in the x/asset store.
+4. Save the token basic information (name, symbol, decimal and description) in the x/bank metadata store
+5. Save the token management info and distribution info in the x/asset store.
 
 ## 2. AssignRoles
 
