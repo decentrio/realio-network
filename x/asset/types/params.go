@@ -1,6 +1,10 @@
 package types
 
-import "gopkg.in/yaml.v2"
+import (
+	"fmt"
+
+	"gopkg.in/yaml.v2"
+)
 
 // NewParams creates a new Params instance
 func NewParams() Params {
@@ -14,6 +18,11 @@ func DefaultParams() Params {
 
 // Validate validates the set of params
 func (p Params) Validate() error {
+	for _, extension := range p.AllowExtensions {
+		if extension == "" {
+			return fmt.Errorf("Extension can not be empty")
+		}
+	}
 	return nil
 }
 

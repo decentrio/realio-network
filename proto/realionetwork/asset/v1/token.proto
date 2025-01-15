@@ -2,16 +2,43 @@ syntax = "proto3";
 package realionetwork.asset.v1;
 
 import "gogoproto/gogo.proto";
-import "realionetwork/asset/v1/tokenauthorization.proto";
 
 option go_package = "github.com/realiotech/realio-network/x/asset/types";
 
 // Token represents an asset in the module
 message Token {
-  string name = 1;
-  string symbol = 2;
-  string total = 3;
-  bool authorizationRequired = 4;
-  string manager = 5;
-  repeated TokenAuthorization authorized = 6;
+  string token_id = 1;
+  string issuer = 2;
+  string name = 3;
+  string symbol = 4;
+  uint32 decimal = 5;
+  string description = 6;
+  string evm_address = 9;
+}
+
+// TokenManagement represents the asset manager's execute functions.
+message TokenManagement {
+  repeated string managers = 1;
+  bool allow_new_extensions = 2;
+  repeated string extensions_list = 3;
+}
+
+// TokenDistribution represents the asset manager's execute functions.
+message TokenDistribution {
+  repeated string distributors = 1;
+  string max_supply = 2 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ]; 
+}
+
+enum Role {
+  option (gogoproto.goproto_enum_prefix) = false;
+
+  // ROLE_UNSPECIFIED defines a no-op role.
+  ROLE_UNSPECIFIED = 0 [(gogoproto.enumvalue_customname) = "EmptyRole"];
+  // ROLE_MANAGER defines a token manager role.
+  ROLE_MANAGER = 1 [(gogoproto.enumvalue_customname) = "ManagerRole"];
+  // ROLE_DISTRIBUTOR defines a token distributor role.
+  ROLE_DISTRIBUTOR = 2 [(gogoproto.enumvalue_customname) = "DistributorRole"];
 }
