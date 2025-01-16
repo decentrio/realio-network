@@ -16,6 +16,7 @@ service Msg {
   // this line is used by starport scaffolding # proto/tx/rpc
   rpc CreateToken(MsgCreateToken) returns (MsgCreateTokenResponse);
   rpc AssignRoles(MsgAssignRoles) returns (MsgAssignRolesResponse);
+  rpc UnassignRoles(MsgUnassignRoles) returns (MsgUnassignRolesResponse);
 }
 
 message MsgCreateToken {
@@ -52,6 +53,18 @@ message MsgAssignRoles {
 }
 
 message MsgAssignRolesResponse {}
+
+message MsgUnassignRoles {
+  option (cosmos.msg.v1.signer) = "issuer";
+  // issuer is the address that defines the token
+  string issuer = 1;
+
+  string token_id = 2;
+  repeated string managers = 3;
+  repeated string distributors = 4;
+}
+
+message MsgUnassignRolesResponse {}
 
 message MsgUpdateParams {
   option (cosmos.msg.v1.signer) = "authority";

@@ -5,9 +5,11 @@ import (
 )
 
 var (
-	ParamsKey        = collections.NewPrefix(0)
-	TokenKeyPrefix   = collections.NewPrefix(1)
-	IssuerPrefixKey = "issuer"
+	ParamsKey             = collections.NewPrefix(0)
+	TokenKey              = collections.NewPrefix(1)
+	TokenManagementKey    = collections.NewPrefix(2)
+	TokenDistributionKey  = collections.NewPrefix(3)
+	WhitelistAddressesKey = collections.NewPrefix(4)
 )
 
 const (

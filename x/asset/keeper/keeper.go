@@ -29,7 +29,7 @@ type Keeper struct {
 	Token              collections.Map[string, types.Token]
 	TokenManagement    collections.Map[string, types.TokenManagement]
 	TokenDistribution  collections.Map[string, types.TokenDistribution]
-	WhitelistAddresses collections.Map[sdk.AccAddress, bool]
+	WhitelistAddresses collections.Map[string, bool]
 }
 
 // NewKeeper returns a new Keeper object with a given codec, dedicated
@@ -44,15 +44,16 @@ func NewKeeper(
 ) *Keeper {
 	sb := collections.NewSchemaBuilder(storeService)
 	k := Keeper{
-		cdc:               cdc,
-		storeService:      storeService,
-		authority:         authority,
-		bk:                bk,
-		ak:                ak,
-		Params:            collections.NewItem(sb, types.ParamsKey, "params", codec.CollValue[types.Params](cdc)),
-		Token:             collections.NewMap(sb, types.TokenKeyPrefix, "token", collections.StringKey, codec.CollValue[types.Token](cdc)),
-		TokenManagement:   collections.NewMap(sb, types.TokenKeyPrefix, "token_management", collections.StringKey, codec.CollValue[types.TokenManagement](cdc)),
-		TokenDistribution: collections.NewMap(sb, types.TokenKeyPrefix, "token_distribution", collections.StringKey, codec.CollValue[types.TokenDistribution](cdc)),
+		cdc:                cdc,
+		storeService:       storeService,
+		authority:          authority,
+		bk:                 bk,
+		ak:                 ak,
+		Params:             collections.NewItem(sb, types.ParamsKey, "params", codec.CollValue[types.Params](cdc)),
+		Token:              collections.NewMap(sb, types.TokenKey, "token", collections.StringKey, codec.CollValue[types.Token](cdc)),
+		TokenManagement:    collections.NewMap(sb, types.TokenManagementKey, "token_management", collections.StringKey, codec.CollValue[types.TokenManagement](cdc)),
+		TokenDistribution:  collections.NewMap(sb, types.TokenDistributionKey, "token_distribution", collections.StringKey, codec.CollValue[types.TokenDistribution](cdc)),
+		WhitelistAddresses: collections.NewMap(sb, types.WhitelistAddressesKey, "whitelist_addresses", collections.StringKey, collections.BoolValue),
 	}
 
 	schema, err := sb.Build()
@@ -68,8 +69,8 @@ func (k Keeper) Logger(ctx context.Context) log.Logger {
 	return sdkCtx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-func (k Keeper) GetWhitelistAddress(ctx context.Context, accAddr sdk.AccAddress) bool {
-	found, err := k.WhitelistAddresses.Get(ctx, accAddr)
+func (k Keeper) GetWhitelistAddress(ctx context.Context, address string) bool {
+	found, err := k.WhitelistAddresses.Get(ctx, address)
 	if err != nil {
 		return false
 	}

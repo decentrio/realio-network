@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 
 	errorsmod "cosmossdk.io/errors"
@@ -34,12 +35,7 @@ func (ms msgServer) CreateToken(ctx context.Context, msg *types.MsgCreateToken) 
 		return nil, err
 	}
 
-	issuerAddr, err := ms.ak.AddressCodec().StringToBytes(msg.Issuer)
-	if err != nil {
-		return nil, errorsmod.Wrapf(types.ErrAccAddress, err.Error())
-	}
-
-	if !ms.GetWhitelistAddress(ctx, issuerAddr) {
+	if !ms.GetWhitelistAddress(ctx, msg.Issuer) {
 		return nil, errorsmod.Wrapf(types.ErrUnauthorize, "issuer not in whitelisted addresses")
 	}
 
@@ -55,7 +51,7 @@ func (ms msgServer) CreateToken(ctx context.Context, msg *types.MsgCreateToken) 
 	// TODO: create evm precompile here
 
 	token := types.NewToken(tokenId, msg.Name, msg.Decimal, msg.Description, msg.Symbol, msg.Issuer)
-	err = ms.Token.Set(ctx, tokenId, token)
+	err := ms.Token.Set(ctx, tokenId, token)
 	if err != nil {
 		return nil, errorsmod.Wrap(types.ErrTokenSet, err.Error())
 	}
@@ -110,7 +106,10 @@ func (ms msgServer) AssignRoles(ctx context.Context, msg *types.MsgAssignRoles) 
 	if err != nil {
 		return nil, errorsmod.Wrapf(types.ErrTokenManagementGet, err.Error())
 	}
-	tokenManagement.Managers = msg.Managers
+	newManagers := append(tokenManagement.Managers, msg.Managers...)
+	slices.Sort(newManagers)
+	tokenManagement.Managers = slices.Compact(newManagers)
+
 	err = ms.TokenManagement.Set(ctx, msg.TokenId, tokenManagement)
 	if err != nil {
 		return nil, errorsmod.Wrap(types.ErrTokenManagementSet, err.Error())
@@ -120,7 +119,10 @@ func (ms msgServer) AssignRoles(ctx context.Context, msg *types.MsgAssignRoles) 
 	if err != nil {
 		return nil, errorsmod.Wrapf(types.ErrTokenDistributionGet, err.Error())
 	}
-	tokenDistribution.Distributors = msg.Distributors
+	newDistributors := append(tokenDistribution.Distributors, msg.Distributors...)
+	slices.Sort(newDistributors)
+	tokenDistribution.Distributors = slices.Compact(newDistributors)
+
 	err = ms.TokenDistribution.Set(ctx, msg.TokenId, tokenDistribution)
 	if err != nil {
 		return nil, errorsmod.Wrap(types.ErrTokenDistributionSet, err.Error())
@@ -134,6 +136,58 @@ func (ms msgServer) AssignRoles(ctx context.Context, msg *types.MsgAssignRoles) 
 	)
 
 	return &types.MsgAssignRolesResponse{}, nil
+}
+
+func (ms msgServer) UnassignRoles(ctx context.Context, msg *types.MsgUnassignRoles) (*types.MsgUnassignRolesResponse, error) {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+
+	if err := msg.ValidateBasic(); err != nil {
+		return nil, err
+	}
+
+	token, err := ms.Token.Get(ctx, msg.TokenId)
+	if err != nil {
+		return nil, errorsmod.Wrapf(types.ErrTokenGet, err.Error())
+	}
+
+	if msg.Issuer != token.Issuer {
+		return nil, errorsmod.Wrapf(types.ErrUnauthorize, "issuer not the creator of the token")
+	}
+
+	tokenManagement, err := ms.TokenManagement.Get(ctx, msg.TokenId)
+	if err != nil {
+		return nil, errorsmod.Wrapf(types.ErrTokenManagementGet, err.Error())
+	}
+	tokenManagement.Managers = slices.DeleteFunc(tokenManagement.Managers, func(manager string) bool {
+		return slices.Contains(msg.Managers, manager)
+	})
+
+	err = ms.TokenManagement.Set(ctx, msg.TokenId, tokenManagement)
+	if err != nil {
+		return nil, errorsmod.Wrap(types.ErrTokenManagementSet, err.Error())
+	}
+
+	tokenDistribution, err := ms.TokenDistribution.Get(ctx, msg.TokenId)
+	if err != nil {
+		return nil, errorsmod.Wrapf(types.ErrTokenDistributionGet, err.Error())
+	}
+
+	tokenDistribution.Distributors = slices.DeleteFunc(tokenDistribution.Distributors, func(distributor string) bool {
+		return slices.Contains(msg.Distributors, distributor)
+	})
+	err = ms.TokenDistribution.Set(ctx, msg.TokenId, tokenDistribution)
+	if err != nil {
+		return nil, errorsmod.Wrap(types.ErrTokenDistributionSet, err.Error())
+	}
+
+	sdkCtx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeTokenAuthorizeUpdated,
+			sdk.NewAttribute(types.AttributeKeyTokenId, msg.TokenId),
+		),
+	)
+
+	return &types.MsgUnassignRolesResponse{}, nil
 }
 
 // UpdateParams updates the params.
