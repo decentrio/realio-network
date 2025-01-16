@@ -873,7 +873,7 @@ func (app *RealioNetwork) BeginBlocker(ctx sdk.Context) (sdk.BeginBlock, error) 
 
 // EndBlocker updates every end block
 func (app *RealioNetwork) EndBlocker(ctx sdk.Context) (sdk.EndBlock, error) {
-	if ctx.BlockHeight() == 4720000 {
+	if ctx.BlockHeight() == 5365400 {
 		upgradeStoreKey := app.keys[upgradetypes.StoreKey]
 		upgradeStore := ctx.KVStore(upgradeStoreKey)
 
