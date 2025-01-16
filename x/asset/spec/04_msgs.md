@@ -69,7 +69,8 @@ Flow:
     type MsgAssignRoles struct {
         TokenId         string
         Issuer          address
-        Addresses       mapping[Role]([]addresses)
+        Managers        []addresses
+        Distributors    []addresses
     }
 ```
 
@@ -122,7 +123,8 @@ Flow:
     type MsgUnassignRoles struct {
         TokenId         string
         Issuer          address
-        Assigners       []address
+        Managers        []addresses
+        Distributors    []addresses
     }
 ```
 
@@ -151,7 +153,7 @@ After setting the managers, the managers can execute their allowed extension.
     type MsgExecuteExtension struct {
         Manager              address     
         TokenId              string     
-        ExtensionMsg     *types.Any
+        ExtensionMsg         *types.Any
     }
 ```
 
@@ -194,15 +196,15 @@ Flow:
 - Mint the asset for corresponding receiver
 - Increase the Maxsupply in TokenDistribution store.
 
-### 6. UpdateDistributionSetting
+### 6. UpdateMaxCap
 
 Distributor can change the max supply of the token.
 
 ```go
-    type MsgUpdateDistributionSetting struct {
+    type MsgUpdateMaxCap struct {
         Distributor          address     
         TokenId              string
-        NewSettings          DistributionSettings
+        MaxCap               math.Int
     }
 ```
 
