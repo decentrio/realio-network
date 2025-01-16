@@ -25,7 +25,7 @@ ERC-20 precompiles are offered by evmOS for better interacting with Cosmos SDK. 
 
 To link an asset to ERC20 Precompile, when issuer send the MsgIssueToken to the Asset Module, a new asset will be created and a new evm address is created randomly, which will be auto assigned an erc20-precompiles to interact with evm environment. After linking, all call to the token contract will now redirect to precompile instead of the evm.
 
-![asset_precompiles](imgs/linking_precompiles.png)
+![issue_token](imgs/issue_token.png)
 
 ### Mapping extensions
 
