@@ -12,11 +12,13 @@ import (
 	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/common"
 	auth "github.com/evmos/os/precompiles/authorization"
 	cmn "github.com/evmos/os/precompiles/common"
 	erc20types "github.com/evmos/os/x/erc20/types"
 	"github.com/evmos/os/x/evm/core/vm"
 	transferkeeper "github.com/evmos/os/x/ibc/transfer/keeper"
+	assetkeeper "github.com/realiotech/realio-network/x/asset/keeper"
 )
 
 const (
@@ -49,15 +51,17 @@ type Precompile struct {
 	transferKeeper transferkeeper.Keeper
 	// BankKeeper is a public field so that the werc20 precompile can use it.
 	BankKeeper bankkeeper.Keeper
+	assetKeep  assetkeeper.Keeper
 }
 
 // NewPrecompile creates a new ERC-20 Precompile instance as a
 // PrecompiledContract interface.
 func NewPrecompile(
-	tokenPair erc20types.TokenPair,
+	address common.Address,
 	bankKeeper bankkeeper.Keeper,
 	authzKeeper authzkeeper.Keeper,
 	transferKeeper transferkeeper.Keeper,
+	assetKeeper assetkeeper.Keeper,
 ) (*Precompile, error) {
 	newABI, err := cmn.LoadABI(f, abiPath)
 	if err != nil {
@@ -72,12 +76,12 @@ func NewPrecompile(
 			KvGasConfig:          storetypes.GasConfig{},
 			TransientKVGasConfig: storetypes.GasConfig{},
 		},
-		tokenPair:      tokenPair,
 		BankKeeper:     bankKeeper,
 		transferKeeper: transferKeeper,
+		assetKeep: assetKeeper,
 	}
 	// Address defines the address of the ERC-20 precompile contract.
-	p.SetAddress(p.tokenPair.GetERC20Contract())
+	p.SetAddress(address)
 	return p, nil
 }
 

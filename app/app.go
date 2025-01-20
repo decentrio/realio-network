@@ -474,7 +474,7 @@ func New(
 
 	app.EvmKeeper = evmkeeper.NewKeeper(
 		appCodec, keys[evmtypes.StoreKey], tkeys[evmtypes.TransientKey], authtypes.NewModuleAddress(govtypes.ModuleName),
-		app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.FeeMarketKeeper, MockErc20Keeper{},
+		app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.FeeMarketKeeper, NewEmptyMockErc20Keeper(),
 		tracer, app.GetSubspace(evmtypes.ModuleName),
 	)
 
@@ -490,7 +490,6 @@ func New(
 		runtime.NewKVStoreService(keys[assetmoduletypes.StoreKey]),
 		app.BankKeeper,
 		app.AccountKeeper,
-		app.ModuleAccountAddrs(),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
@@ -501,9 +500,6 @@ func New(
 		app.BankKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
-
-	// Add transfer restriction
-	app.BankKeeper.AppendSendRestriction(app.AssetKeeper.AssetSendRestriction)
 
 	// IBC Keeper
 	app.IBCKeeper = ibckeeper.NewKeeper(
@@ -801,7 +797,7 @@ func New(
 		FeeMarketKeeper:        app.FeeMarketKeeper,
 		MaxTxGasWanted:         maxGasWanted,
 		ExtensionOptionChecker: ostypes.HasDynamicFeeExtensionOption,
-		TxFeeChecker:           evmosanteevm.NewDynamicFeeChecker(app.EvmKeeper),
+		TxFeeChecker:           evmosanteevm.NewDynamicFeeChecker(app.FeeMarketKeeper),
 	}
 
 	if err := options.Validate(); err != nil {
