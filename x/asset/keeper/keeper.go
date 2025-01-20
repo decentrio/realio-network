@@ -10,6 +10,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/realiotech/realio-network/x/asset/types"
 )
@@ -76,4 +77,21 @@ func (k Keeper) GetWhitelistAddress(ctx context.Context, address string) bool {
 	}
 
 	return found
+}
+
+func (k Keeper) EVMContractExist(ctx context.Context, address common.Address) (bool, error) {
+	exist := false
+	err := k.Token.Walk(ctx, nil, func(key string, token types.Token) (stop bool, err error) {
+		if token.EvmAddress == address.String() {
+			exist = true
+			return true, nil
+		}
+		return false, nil
+	})
+
+	if err != nil {
+		return false, err
+	}
+
+	return exist, nil
 }

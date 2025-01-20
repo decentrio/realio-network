@@ -13,6 +13,7 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
 	"github.com/realiotech/realio-network/x/asset/types"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 type msgServer struct {
@@ -48,9 +49,10 @@ func (ms msgServer) CreateToken(ctx context.Context, msg *types.MsgCreateToken) 
 		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "token with id %s already exists", tokenId)
 	}
 
-	// TODO: create evm precompile here
+	// Create a evm addr from tokenId
+	evmAddr := common.BytesToAddress([]byte(tokenId))
 
-	token := types.NewToken(tokenId, msg.Name, msg.Decimal, msg.Description, msg.Symbol, msg.Issuer)
+	token := types.NewToken(tokenId, msg.Name, msg.Decimal, msg.Description, msg.Symbol, msg.Issuer, evmAddr.Hex())
 	err := ms.Token.Set(ctx, tokenId, token)
 	if err != nil {
 		return nil, errorsmod.Wrap(types.ErrTokenSet, err.Error())

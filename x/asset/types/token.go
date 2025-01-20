@@ -9,7 +9,7 @@ import (
 )
 
 // NewToken creates a new Token instance
-func NewToken(id, name string, decimal uint32, description string, symbol string, issuer string) Token {
+func NewToken(id, name string, decimal uint32, description string, symbol string, issuer string, evmAddress string) Token {
 	return Token{
 		TokenId:     id,
 		Name:        name,
@@ -17,6 +17,7 @@ func NewToken(id, name string, decimal uint32, description string, symbol string
 		Description: description,
 		Symbol:      symbol,
 		Issuer:      issuer,
+		EvmAddress:  evmAddress,
 	}
 }
 
