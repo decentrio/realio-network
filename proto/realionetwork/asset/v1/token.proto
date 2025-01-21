@@ -21,15 +21,15 @@ message TokenManagement {
   repeated string managers = 1;
   bool allow_new_extensions = 2;
   repeated string extensions_list = 3;
-}
-
-// TokenDistribution represents the asset manager's execute functions.
-message TokenDistribution {
-  repeated string distributors = 1;
-  string max_supply = 2 [
+  string max_supply = 4 [
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
-  ]; 
+  ];
+}
+
+message ShareAddress {
+  string evm_address = 1;
+  string sdk_address = 2;
 }
 
 enum Role {

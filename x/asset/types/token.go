@@ -21,18 +21,12 @@ func NewToken(id, name string, decimal uint32, description string, symbol string
 	}
 }
 
-func NewTokenManagement(managers []string, allowNewExtension bool, extensionList []string) TokenManagement {
+func NewTokenManagement(managers []string, allowNewExtension bool, extensionList []string, maxSupply math.Int) TokenManagement {
 	return TokenManagement{
 		Managers:           managers,
 		AllowNewExtensions: allowNewExtension,
 		ExtensionsList:     extensionList,
-	}
-}
-
-func NewTokenDistribution(distributors []string, maxSupply math.Int) TokenDistribution {
-	return TokenDistribution{
-		Distributors: distributors,
-		MaxSupply:    maxSupply,
+		MaxSupply: maxSupply,
 	}
 }
 

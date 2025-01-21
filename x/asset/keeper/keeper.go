@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 
@@ -29,7 +30,6 @@ type Keeper struct {
 	Params             collections.Item[types.Params]
 	Token              collections.Map[string, types.Token]
 	TokenManagement    collections.Map[string, types.TokenManagement]
-	TokenDistribution  collections.Map[string, types.TokenDistribution]
 	WhitelistAddresses collections.Map[string, bool]
 }
 
@@ -53,7 +53,6 @@ func NewKeeper(
 		Params:             collections.NewItem(sb, types.ParamsKey, "params", codec.CollValue[types.Params](cdc)),
 		Token:              collections.NewMap(sb, types.TokenKey, "token", collections.StringKey, codec.CollValue[types.Token](cdc)),
 		TokenManagement:    collections.NewMap(sb, types.TokenManagementKey, "token_management", collections.StringKey, codec.CollValue[types.TokenManagement](cdc)),
-		TokenDistribution:  collections.NewMap(sb, types.TokenDistributionKey, "token_distribution", collections.StringKey, codec.CollValue[types.TokenDistribution](cdc)),
 		WhitelistAddresses: collections.NewMap(sb, types.WhitelistAddressesKey, "whitelist_addresses", collections.StringKey, collections.BoolValue),
 	}
 
@@ -79,19 +78,48 @@ func (k Keeper) GetWhitelistAddress(ctx context.Context, address string) bool {
 	return found
 }
 
-func (k Keeper) EVMContractExist(ctx context.Context, address common.Address) (bool, error) {
+func (k Keeper) EVMContractExist(ctx context.Context, address common.Address) (bool, string, error) {
 	exist := false
+	tokenId := ""
 	err := k.Token.Walk(ctx, nil, func(key string, token types.Token) (stop bool, err error) {
 		if token.EvmAddress == address.String() {
 			exist = true
+			tokenId = key
 			return true, nil
 		}
 		return false, nil
 	})
 
 	if err != nil {
-		return false, err
+		return false, "", err
 	}
 
+	return exist, tokenId, nil
+}
+
+func (k Keeper) GetParams(ctx context.Context) (types.Params, error) {
+	return k.Params.Get(ctx)
+}
+
+func (k Keeper) IsTokenManager(ctx context.Context, tokenId string, addr common.Address) (bool, error) {
+	exist := false
+	tm, err := k.TokenManagement.Get(ctx, tokenId)
+	if err != nil {
+		return false, nil
+	}
+	for _, manager := range tm.Managers {
+		if bytes.Equal(addr.Bytes(), sdk.MustAccAddressFromBech32(manager).Bytes()) {
+			exist = true
+			break
+		}
+	}
 	return exist, nil
+}
+
+func (k Keeper) GetToken(ctx context.Context, tokenId string) (types.Token, error) {
+	return k.Token.Get(ctx, tokenId)
+}
+
+func (k Keeper) GetTokenManager(ctx context.Context, tokenId string) (types.TokenManagement, error) {
+	return k.TokenManagement.Get(ctx, tokenId)
 }
