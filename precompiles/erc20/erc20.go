@@ -6,6 +6,7 @@ package erc20
 import (
 	"embed"
 	"fmt"
+	"slices"
 
 	storetypes "cosmossdk.io/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -15,7 +16,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	auth "github.com/evmos/os/precompiles/authorization"
 	cmn "github.com/evmos/os/precompiles/common"
-	erc20types "github.com/evmos/os/x/erc20/types"
 	"github.com/evmos/os/x/evm/core/vm"
 	transferkeeper "github.com/evmos/os/x/ibc/transfer/keeper"
 	assetkeeper "github.com/realiotech/realio-network/x/asset/keeper"
@@ -47,7 +47,7 @@ var _ vm.PrecompiledContract = &Precompile{}
 // Precompile defines the precompiled contract for ERC-20.
 type Precompile struct {
 	cmn.Precompile
-	tokenPair      erc20types.TokenPair
+	denom          string
 	transferKeeper transferkeeper.Keeper
 	// BankKeeper is a public field so that the werc20 precompile can use it.
 	BankKeeper bankkeeper.Keeper
@@ -57,6 +57,7 @@ type Precompile struct {
 // NewPrecompile creates a new ERC-20 Precompile instance as a
 // PrecompiledContract interface.
 func NewPrecompile(
+	denom string,
 	address common.Address,
 	bankKeeper bankkeeper.Keeper,
 	authzKeeper authzkeeper.Keeper,
@@ -78,7 +79,8 @@ func NewPrecompile(
 		},
 		BankKeeper:     bankKeeper,
 		transferKeeper: transferKeeper,
-		assetKeep: assetKeeper,
+		assetKeep:      assetKeeper,
+		denom:          denom,
 	}
 	// Address defines the address of the ERC-20 precompile contract.
 	p.SetAddress(address)
@@ -188,12 +190,32 @@ func (p *Precompile) HandleMethod(
 	method *abi.Method,
 	args []interface{},
 ) (bz []byte, err error) {
+	params, err := p.assetKeep.GetParams(ctx)
+	allowedMethods := params.AllowExtensions
+	if err != nil {
+		return nil, err
+	}
 	switch method.Name {
 	// ERC-20 transactions
 	case TransferMethod:
 		bz, err = p.Transfer(ctx, contract, stateDB, method, args)
 	case TransferFromMethod:
 		bz, err = p.TransferFrom(ctx, contract, stateDB, method, args)
+	case MintMethod:
+		if !slices.Contains(allowedMethods, MintMethod) {
+			return nil, fmt.Errorf("method %s is not supported", MintMethod)
+		}
+		bz, err = p.Mint(ctx, contract, stateDB, method, args)
+	case BurnMethod:
+		if !slices.Contains(allowedMethods, BurnMethod) {
+			return nil, fmt.Errorf("method %s is not supported", BurnMethod)
+		}
+		bz, err = p.Burn(ctx, contract, stateDB, method, args)
+	case BurnFromMethod:
+		if !slices.Contains(allowedMethods, BurnFromMethod) {
+			return nil, fmt.Errorf("method %s is not supported", BurnFromMethod)
+		}
+		bz, err = p.BurnFrom(ctx, contract, stateDB, method, args)
 	case auth.ApproveMethod:
 		bz, err = p.Approve(ctx, contract, stateDB, method, args)
 	case auth.IncreaseAllowanceMethod:
