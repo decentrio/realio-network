@@ -17,6 +17,8 @@ order: 4
         Decimal                    uint32   
         Description                string 
         ExtensionsList             [ ]string
+        Distributor                [ ]string
+        InitialSupply              [ ]math.Int
     }
 ```
 
