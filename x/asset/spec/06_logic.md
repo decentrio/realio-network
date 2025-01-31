@@ -51,6 +51,8 @@ On token creation, all token will be linked to a erc20-precompiles, which allows
 
 The token itself exists as a coin within the bank state, maintaining its own logic and extensions independently of any ERC20 or EVM contract logic. The ERC20 contract deployed on the EVM serves purely as an interface, with its logic effectively bypassed. When other EVM contracts interact with this interface, their requests are forwarded via JSON-RPC calls to the `asset` module, which directly handles and executes the necessary operations. This is achieved by creating a `dynamic precompile`, ensuring that the token’s behavior aligns with its internal state while still providing compatibility with the EVM ecosystem.
 
+The precompiles actions will depend on the `AllowExtensionList` when creating the token. Therefore different tokens will have precompiles with different addresses and extensions.
+
 ### EVM Precompiles
 
 EVM precompiles are EVM interface contracts with state access. These smart contracts can directly interact with Cosmos SDK modules, enabling their own operations while also interacting with the EVM state and other SDK modules.
