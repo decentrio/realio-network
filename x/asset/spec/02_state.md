@@ -42,13 +42,12 @@ When create the token, `asset` module auto generate for it a evm address. This a
 ```go
 type TokenManagement struct {
 	Managers           []string              `protobuf:"bytes,1,rep,name=managers,proto3" json:"managers,omitempty"`
-	AllowNewExtensions bool                  `protobuf:"varint,2,opt,name=allow_new_extensions,json=allowNewExtensions,proto3" json:"allow_new_extensions,omitempty"`
 	ExtensionsList     []string              `protobuf:"bytes,3,rep,name=extensions_list,json=extensionsList,proto3" json:"extensions_list,omitempty"`
 	MaxSupply          cosmossdk_io_math.Int `protobuf:"bytes,4,opt,name=max_supply,json=maxSupply,proto3,customtype=cosmossdk.io/math.Int" json:"max_supply"`
 }
 ```
 
-By setting `allow_new_extensions`, `issuer` can specify whether they accept new extensions or not when creating a new token. If he permits it, when upgrading the chain, the new features will be automatically added to the `extensions_list`and the `manager` can then modify the `extensions_list` as he sees fit. Otherwise, the `manager` can not chaing the `extensions_list`.
+`extensions_list` is the list of actions that user can execute. The `manager` can then modify the `extensions_list` as he sees fit.
 
 `MaxSupply` defines the maximum number of tokens can be minted.
 

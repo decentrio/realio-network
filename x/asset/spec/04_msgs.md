@@ -12,7 +12,6 @@ order: 4
     type MsgIssueToken struct {
         Issuer                     address
         Managers                   [ ]address
-        Distributors               [ ]address
         Name                       string   
         Symbol                     string   
         Decimal                    uint32   
@@ -38,7 +37,6 @@ Example token.json:
 ```json
    {
       "Manager": ["realioabc..."],
-      "Distributor": ["realioabc2..."],
       "Symbol": "riel",
       "Decimal": 18,
       "Description": "",
@@ -61,27 +59,27 @@ Flow:
 4. Save the token basic information (name, symbol, decimal and description) in the x/bank metadata store
 5. Save the token management info and distribution info in the x/asset store.
 
-## 2. AssignRoles
+## 2. AssignManagers
 
-`MsgAssignRoles` allow issue to set role likes manager or distributor for the token.
+`MsgAssignManagers` allow issue to set managers for the token.
 
 ```go
-    type MsgAssignRoles struct {
+    type MsgAssignManagers struct {
         TokenId         string
         Issuer          address
-        Addresses       mapping[Role]([]addresses)
+        Addresses       []addresses
     }
 ```
 
 ```go
-    type MsgAssignRolesResponse struct {
+    type MsgAssignManagersResponse struct {
     }
 ```
 
 CLI:
 
 ```bash
-    realio-networkd tx assign-roles [privilege.json] [flags]
+    realio-networkd tx assign-managers [privilege.json] [flags]
 ```
 
 Example privilege.json:
@@ -91,14 +89,8 @@ Example privilege.json:
         "TokenId": "asset/realio1.../tokena",
         "Issuer": "realio1...",
         "Assign": [
-            {
-                "role": 1 (manager),
-                "addresses": ["realio2..."],
-            },
-            {
-                "role": 2 (distributor),
-                "addresses": ["realio3..."],
-            }
+            "realio2...",
+            "realio3..."
         ]
     }
 ```
@@ -109,12 +101,11 @@ Validation:
 - Check if caller is issuer of the token
 - Check if addresses is valid
 - Check if manager doesn't exist in the current managers list of token
-- Check if distributor doesn't exist in the current distributor list of token
 
 Flow:
 
-- Get `TokenManager` and `TokenDistributor` from store by token_id
-- Loop through addresses and append manager addresses to `TokenManager.Managers`, distributor addresses to `TokenDistributor.Distributors`
+- Get `TokenManager` from store by token_id
+- Loop through addresses and append manager addresses to `TokenManager.Managers`
 
 ## 3. UnassignRoles
 
@@ -136,12 +127,12 @@ Validation:
 - Check if token exists
 - Check if caller is issuer of the token
 - Check if addresses is valid
-- Check if addresses is in `TokenManager.Managers` or `TokenDistributor.Distributors`
+- Check if addresses is in `TokenManager.Managers` 
 
 Flow:
 
-- Get `TokenManager` and `TokenDistributor` from store by token_id
-- Loop through addresses and remove manager addresses from `TokenManager.Managers`, distributor addresses to `TokenDistributor.Distributors`
+- Get `TokenManager` from store by token_id
+- Loop through addresses and remove manager addresses from `TokenManager.Managers`
 
 ## 4. ExecuteExtension
 
@@ -185,35 +176,16 @@ Validation:
 - Checks if the token specified in the msg exists.
 - Checks if the extension is supported.
 - Check if addresses is valid
-- Checks if the distributor address is in `TokenDistributor.Distributors`
-- Checks if mint amount exceed `MaxSupply` or `MaxRatelimit`.
+- Checks if the address is in `TokenManager.Managers`
+- Checks if mint amount exceed `MaxSupply`.
 
 Flow:
 
-- Get `TokenDistributor` from store by token_id
+- Get `TokenManager` from store by token_id
 - Mint the asset for corresponding receiver
-- Increase the Maxsupply in TokenDistribution store.
+- Increase the supply.
 
-### 6. UpdateDistributionSetting
-
-Distributor can change the max supply of the token.
-
-```go
-    type MsgUpdateDistributionSetting struct {
-        Distributor          address     
-        TokenId              string
-        NewSettings          DistributionSettings
-    }
-```
-
-Validation:
-
-- Checks if the token specified in the msg exists.
-- Checks if the extension is supported.
-- Checks if the distributor address is in `TokenDistributor.Distributors`
-- Checks if current supply exceed new settings `MaxSupply`
-
-### 7. UpdateExtensionsList
+### 6. UpdateExtensionsList
 
 Manager can update the `ExtensionsList` of the token. This only can be executed when the token's `AllowNewExtensions` is enable.
 
@@ -231,4 +203,4 @@ Validation:
 - Checks if manager addresses is in `TokenManager.Managers`
 - Checks if the new extension is supported.
 
-### 8. UpdateParams
+### 7. UpdateParams
