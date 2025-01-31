@@ -13,9 +13,7 @@ The `x/asset` module keeps the following objects in state:
 | `Params`             | Params of asset module                 | `[]byte{1}`                                               | `[]byte(params)`                      | KV    |
 | `Token`              | Token information                      | `[]byte{2} + []byte(token_id)`                            | `[]byte{token}`                       | KV    |
 | `TokenManagement`    | TokenManagement info of a denom        | `[]byte{3} + []byte(token_id)`                            | `[]byte{token_manager}`               | KV    |
-| `TokenDistribution`  | TokenDistribution info of a denom      | `[]byte{4} + []byte(token_id)`                            | `[]byte{token_distributor}`           | KV    |
-| `WhitelistAddresses` | Whitelist Addresses                    | `[]byte{5} + []byte(address)`                             | `[]byte{bool}`                        | KV    |
-| `ExtenstionStore`    | State store for each extensions        | `[]byte{6} + []byte(token_id) + []byte(extension_name)`   |  Depend on extension implementation   | KV    |
+| `WhitelistAddresses` | Whitelist Addresses                    | `[]byte{4} + []byte(address)`                             | `[]byte{bool}`                        | KV    |
 
 ### Token
 
@@ -58,8 +56,3 @@ By setting `allow_new_extensions`, `issuer` can specify whether they accept new 
 
 `WhitelistAddresses` is a list of the address that's allow to create new asset.
 
-### ExtenstionStore
-
-Each extension has its own store, which can be used in that extension execute or query operations. The store will be passed to the extension each time the extension is executed.
-
-Each extension store has its own namespace, which is defined by token identifiers and extension name, which means that a combination of token and extension will create a new substore derived from the Asset module store.
