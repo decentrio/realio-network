@@ -16,7 +16,6 @@ order: 4
         Symbol                     string   
         Decimal                    uint32   
         Description                string 
-        AllowNewExtensions         bool
         ExtensionsList             [ ]string
     }
 ```
