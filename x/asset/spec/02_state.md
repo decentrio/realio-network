@@ -23,13 +23,13 @@ Allows creation of tokens with optional user authorization.
 
 ```go
 type Token struct {
-    TokenId                string               `protobuf:"bytes,1,opt,name=token_id,json=tokenId,proto3" json:"token_id,omitempty"`
-    Issuer                 string               `protobuf:"bytes,2,opt,name=issuer,proto3" json:"issuer,omitempty"`
-    Name                   string               `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
-    Symbol                 string               `protobuf:"bytes,4,opt,name=symbol,proto3" json:"symbol,omitempty"`
-    Decimals               uint32               `protobuf:"varint,5,opt,name=decimals,proto3" json:"decimals,omitempty"`
-    Description            string               `protobuf:"bytes,6,opt,name=description,proto3" json:"description,omitempty"`
-    EVMAddress             common.Address       `protobuf:"bytes,7,opt,name=description,proto3" json:"description,omitempty"`
+	TokenId     string `protobuf:"bytes,1,opt,name=token_id,json=tokenId,proto3" json:"token_id,omitempty"`
+	Issuer      string `protobuf:"bytes,2,opt,name=issuer,proto3" json:"issuer,omitempty"`
+	Name        string `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	Symbol      string `protobuf:"bytes,4,opt,name=symbol,proto3" json:"symbol,omitempty"`
+	Decimal     uint32 `protobuf:"varint,5,opt,name=decimal,proto3" json:"decimal,omitempty"`
+	Description string `protobuf:"bytes,6,opt,name=description,proto3" json:"description,omitempty"`
+	EvmAddress  string `protobuf:"bytes,9,opt,name=evm_address,json=evmAddress,proto3" json:"evm_address,omitempty"`
 }
 ```
 
@@ -42,24 +42,15 @@ When create the token, `asset` module auto generate for it a evm address. This a
 ### TokenManagement
 
 ```go
-type TokenManagement struct{
-    Managers               []string             `protobuf:"bytes,7,rep,name=managers,proto3" json:"managers,omitempty"`
-    AllowNewExtensions bool                 `protobuf:"varint,10,opt,name=allow_new_Extensions,json=allowNewExtensions,proto3" json:"allow_new_Extensions,omitempty"`
-    ExtensionsList    []string             `protobuf:"bytes,11,rep,name=extensions_list,json=extensionsList,proto3" json:"extensions_list,omitempty"`
-    EvmEnable              bool                 `protobuf:"varint,9,opt,name=evm_enable,json=evmEnable,proto3" json:"evm_enable,omitempty"`
-   }
+type TokenManagement struct {
+	Managers           []string              `protobuf:"bytes,1,rep,name=managers,proto3" json:"managers,omitempty"`
+	AllowNewExtensions bool                  `protobuf:"varint,2,opt,name=allow_new_extensions,json=allowNewExtensions,proto3" json:"allow_new_extensions,omitempty"`
+	ExtensionsList     []string              `protobuf:"bytes,3,rep,name=extensions_list,json=extensionsList,proto3" json:"extensions_list,omitempty"`
+	MaxSupply          cosmossdk_io_math.Int `protobuf:"bytes,4,opt,name=max_supply,json=maxSupply,proto3,customtype=cosmossdk.io/math.Int" json:"max_supply"`
+}
 ```
 
 By setting `allow_new_extensions`, `issuer` can specify whether they accept new extensions or not when creating a new token. If he permits it, when upgrading the chain, the new features will be automatically added to the `extensions_list`and the `manager` can then modify the `extensions_list` as he sees fit. Otherwise, the `manager` can not chaing the `extensions_list`.
-
-### TokenDistribution
-
-```go
-type TokenDistribution struct{
-    Distributors           []string
-    MaxSupply              math.Int
-}
-```
 
 `MaxSupply` defines the maximum number of tokens can be minted.
 
