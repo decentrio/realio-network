@@ -30,8 +30,16 @@ The token creation process involves the `Issuer` executing `MsgIssueToken` that 
 We'll go into details on how each of the extension works
 
 ### Mint extension
+Only manager is allowed to execute `Mint`. Then mint the corresponding amount to the recipient. Note, total supply can not exceed `MaxSupply`
 
 ### Burn extension
+Only manager is allowed to execute `Burn`. Then burn the corresponding amount from the address. Note, address that be freezed can not burn.
+
+### Freeze extension
+Only manager is allowed to execute `Freeze`. Its will lock all amount of a  asset of that address. An address be freezed with a token can not transfer out or burn.
+
+### TransferAuth extension
+Only manager is allowed to execute `TransferAuth`. Its will update the Token's Issue to new receiver.
 
 ### 
 
