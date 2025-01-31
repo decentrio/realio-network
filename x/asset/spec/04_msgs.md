@@ -135,15 +135,16 @@ Flow:
 - Get `TokenManager` from store by token_id
 - Loop through addresses and remove manager addresses from `TokenManager.Managers`
 
-## 4. ExecuteExtension
+## 4. Burn
 
-After setting the managers, the managers can execute their allowed extension.
+This msg only can be executed when the token's `ExtensionsList` has `burn` extension.
 
 ```go
-    type MsgExecuteExtension struct {
+    type MsgBurn struct {
         Manager              address     
         TokenId              string     
-        ExtensionMsg     *types.Any
+        BurnFromAddr         address
+        Amount               math.Int
     }
 ```
 
@@ -151,13 +152,15 @@ Validation:
 
 - Checks if the token specified in the msg exists.
 - Checks if the extension is supported.
-- Checks if the `Msg.Address` has the corresponding `Extension` specified by `ExtensionMsg.NeedExtension()`
+- Check if addresses is valid
+- Checks if the address is in `TokenManager.Managers`
+- Checks if address is freezed in `FreezeAddresses`
 
 Flow:
 
-- Prepare store for the extension of the token via `MakeExtensionStore(extension name, token denom)`. That store is the only store accessable by the extension's `MsgHandler`.
-- `ExtensionMsgRouting` routes the `ExtensionMsg` to the its `MsgHandler`.
-- `MsgHandler` now handles the `ExtensionMsg`.
+- Get `TokenManager` from store by token_id
+- Check if `BurnFromAddr` has enough token to burn
+- Burn the asset from `BurnFromAddr`
 
 ### 5. Mint
 
@@ -165,7 +168,7 @@ This msg only can be executed when the token's `ExtensionsList` has `mint` exten
 
 ```go
     type MsgMint struct {
-        Distributor          address     
+        Manager              address     
         TokenId              string
         Receiver             address
         Amount               math.Int
@@ -186,7 +189,31 @@ Flow:
 - Mint the asset for corresponding receiver
 - Increase the supply.
 
-### 6. UpdateExtensionsList
+### 6. Freeze
+
+This msg only can be executed when the token's `ExtensionsList` has `freeze` extension.
+
+```go
+    type MsgFreeze struct {
+        Manager              address     
+        TokenId              string
+        Receiver             address
+    }
+```
+
+Validation:
+
+- Checks if the token specified in the msg exists.
+- Checks if the extension is supported.
+- Check if addresses is valid
+- Checks if the address is in `TokenManager.Managers`
+
+Flow:
+
+- Get `TokenManager` from store by token_id
+- Set address into `FreezeAddrs`
+
+### 7. UpdateExtensionsList
 
 Manager can update the `ExtensionsList` of the token. This only can be executed when the token's `AllowNewExtensions` is enable.
 
