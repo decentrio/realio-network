@@ -211,7 +211,8 @@ Validation:
 Flow:
 
 - Get `TokenManager` from store by token_id
-- Set address into `FreezeAddrs`
+- Set address into `FreezeAddresses`
+- All account in `FreezeAddresses` can not be transfer token out or burned.
 
 ### 7. UpdateExtensionsList
 
