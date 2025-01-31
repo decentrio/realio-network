@@ -6,60 +6,34 @@ order: 6
 
 This file describes the core logics in this module.
 
+## Token namespace
+
+The token id/denom for the token will be derived from the Issuer and the Symbol with the format of asset/{Issuer}/{Symbol-Lowercase}. This allow many different issuers to issue token with the same symbol, differentiate their denom by including in their creator.
+
+## Token creation
+
+The token creation process involves the `Issuer` executing `MsgIssueToken` that defines info fields for the tokens. Amount those fields, these are the important feilds that dictacts how the token is operated:
+
+- List of extensions (imutable):
+    Choose what exetensions to enable for the token when creating it. The set of extensions is fixed, meaning that all extensions that are not enabled is permanently disabled.
+- Manager (mutable):
+    Assign the manager account which could be an user account or smart contract account. If this field is blank then the manager will set to be the `issuer` of the token.
+- Symbol (imutable):
+    This field will be used to derive the token denom, in the format `asset/{Issuer}/{Symbol-Lowercase}`.
+- Initial Supply (imutable):
+    Upon creation an amount equal to the initial supply will be minted thus create a circulating supply for the token.
+- Distributor (imutable):
+    Think of this account as the treasury manager account whose task is to distribute the token to holders. The initial supply will be minted to this account.
+
 ## Extension
 
-### Register new extension
+We'll go into details on how each of the extension works
 
-To intergrate with the `asset module` Each type of extension has to implement this interface
+### Mint extension
 
-```go
-type Extension interface {
-    RegisterInterfaces()
-    MsgHandler() MsgHandler
-    QueryHandler() QueryHandler
-    CLI() *cobra.Command
-}
+### Burn extension
 
-type MsgHandler func(context Context, extensionStore store.KVStore, funcMsg ExtensionMsg) error
-
-type QueryHandler func(context Context, extensionStore store.KVStore, funcQuery ExtensionMsg) error
-```
-
-This interface provides all the extension necessary for a extension, including a message handler, query handler and cli.
-
-All the `ExtensionMsg` of a extension should return the name of that extension when called `ExtensionName()`. A message handler should handle all the `ExtensionMsg` of that extension.
-
-### Upgrade Extensions
-
-All extensions are located in a seperate packages, for example: asset/extensions, therefore the exentsion or upgrade of extensions is unrelated to core logic of `Asset` module, all the modification and addition happen in only asset/extensions package. The core Asset module does not need to be aware of the specifics of extension handling. It interacts with extensions through defined interfaces or protocols.
-
-Each Extensions has their own proto to define their state and execute/query messages. By assigning a distinct proto to each extension, you ensure that the logic, messages, and data associated with one extension do not interfere with or complicate the others. This also makes the design easier to understand, maintain, and scale.
-
-When adding a `Extension`, we calls `ExtensionRouting.AddExtension()` in `app.go` which inturn maps all the `ExtensionMsg` of that extension to its `MsgHandler`. This mapping logic will later be used when running a `MsgExecuteExtension`.
-
-### Message/Query routing
-
-The message we pass in `ExecuteExtension` is `msg.Any` type. This type refered that it could be any type of message.
-After receive this message, we will unpack the `msg.Any` type to an interface which implements what we want:
-
-```go
-type ExtensionMsg interface {
-    ExtensionName() string
-}
-```
-
-As we defined the `AllowExtensions` in Params. If the message name is in the list, they will also exist there own interface in `ExtensionRouting`.
-
-`ExtensionRouting` acts as a centralized hub for routing messages, making it easy to manage and audit the flow of messages in the system.
-It will route the `ExtensionMsg` to its `MsgHandler` - where the msg is executed. In the `MsgHandler`, the message is further routed based on its type to the correct execution logic. This additional layer of routing within the MsgHandler ensures precise handling through message types, enabling fine-grained control and execution workflows.
-
-This flow will also work with `QueryHandler`, as long as we can unpack the `msg.Any` and get the name of the extension.
-
-### Extension Store
-
-Each extension has its own store, which can be used in that extension execute or query operations. The store will be passed to the extension each time the extension is executed and altered on execution.
-
-This structure help the extension achieve the isolation characteristic of the store, which helps maintain modularity and reduces the risk of unintended interactions or dependencies between extensions.
+### 
 
 ## EVM interaction
 

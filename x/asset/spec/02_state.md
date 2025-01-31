@@ -67,8 +67,3 @@ type TokenDistribution struct{
 
 `WhitelistAddresses` is a list of the address that's allow to create new asset.
 
-### ExtenstionStore
-
-Each extension has its own store, which can be used in that extension execute or query operations. The store will be passed to the extension each time the extension is executed.
-
-Each extension store has its own namespace, which is defined by token identifiers and extension name, which means that a combination of token and extension will create a new substore derived from the Asset module store.
