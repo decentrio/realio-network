@@ -13,7 +13,7 @@ The Realio Asset module is centered around a token model where certain whitelist
 
 Each token can choose to enable extensions supported by the module. Currently, there are four extensions supported: "mint", "freeze", "clawback", "transfer_auth", each handle a completely different logic. We wanna decouple the logic of these extensions from the `Asset module`, meaning that they will be defined in separate packages/modules, thus, developers can customize new extensions without modifying the `Asset Module`. Doing this allows our token model to be extensible while keeping the core logic of `Asset Module` untouched and simple, avoiding complicated migration when we integrating new features.
 
-The token manager's task is to choose what extensions it wants to disable/enable for its token; and only the token manager can trigger those extensions, except for the `mint` extension which is handled by the `distributor`.
+The token manager's task is to choose what extensions it wants to disable/enable for its token; and only the token manager can trigger those extensions.
 
 ![asset_module](imgs/asset_module.png)`
 
@@ -41,6 +41,7 @@ We introduce additional extensions on these standard extensions:
 
 - Mint
 - Burn
+- Freeze
 
 All above extensions can be called from both AssetModule and EVM side (by metamask for example).
 
