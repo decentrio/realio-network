@@ -108,7 +108,7 @@ Flow:
 - Get `TokenManager` from store by token_id
 - Loop through addresses and append manager addresses to `TokenManager.Managers`
 
-## 3. UnassignRoles
+## 3. UnassignManager
 
 ```go
     type MsgUnassignRoles struct {
@@ -128,7 +128,7 @@ Validation:
 - Check if token exists
 - Check if caller is issuer of the token
 - Check if addresses is valid
-- Check if addresses is in `TokenManager.Managers` 
+- Check if addresses is in `TokenExtensions.Managers` 
 
 Flow:
 
@@ -214,22 +214,17 @@ Flow:
 - Set address into `FreezeAddresses`
 - All account in `FreezeAddresses` can not be transfer token out or burned.
 
-### 7. UpdateExtensionsList
-
-Manager can update the `ExtensionsList` of the token. This only can be executed when the token's `AllowNewExtensions` is enable.
+### 7. Set max supply
 
 ```go
-    type ExtensionsList struct {
-        Manager              address     
-        TokenId              string
-        NewExtensions   []string
+    type MsgSetMaxSupply struct {
+        Manager                    address
+        TokenId                    string
+        MaxSupply                  int64
     }
 ```
 
-Validation:
+This message can only executed once, it will set the maximum supply for the token
 
-- Checks if the token specified in the msg exists.
-- Checks if manager addresses is in `TokenManager.Managers`
-- Checks if the new extension is supported.
 
-### 7. UpdateParams
+
