@@ -46,8 +46,6 @@ type TokenExtensions struct {
 
 `extensions_list` is the list of actions that the manager can execute.
 
-`MaxSupply` defines the maximum number of tokens can be minted.
-
 ### WhitelistAddresses
 
 `WhitelistAddresses` is a list of the address that's allow to create new asset.
