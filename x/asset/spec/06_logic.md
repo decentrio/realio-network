@@ -30,8 +30,16 @@ The token creation process involves the `Issuer` executing `MsgIssueToken` that 
 We'll go into details on how each of the extension works
 
 ### Mint extension
+Only manager is allowed to execute `Mint`. Then mint the corresponding amount to the recipient. Note, total supply can not exceed `MaxSupply`
 
 ### Burn extension
+Only manager is allowed to execute `Burn`. Then burn the corresponding amount from the address. Note, address that be freezed can not burn.
+
+### Freeze extension
+Only manager is allowed to execute `Freeze`. Its will lock all amount of a  asset of that address. An address be freezed with a token can not transfer out or burn.
+
+### TransferAuth extension
+Only manager is allowed to execute `TransferAuth`. Its will update the Token's Issue to new receiver.
 
 ### 
 
@@ -42,6 +50,8 @@ We'll go into details on how each of the extension works
 On token creation, all token will be linked to a erc20-precompiles, which allows it to integrate with the ERC20 standard and have an EVM-compatible contract address. This EVM address acts as an abstract interface layer that bypasses the typical logic within ERC20 or EVM contracts. Instead of executing logic directly in the contract, all actions are reflected to the `asset` module's predefined precompiles, where the token’s core state and extensions are managed.
 
 The token itself exists as a coin within the bank state, maintaining its own logic and extensions independently of any ERC20 or EVM contract logic. The ERC20 contract deployed on the EVM serves purely as an interface, with its logic effectively bypassed. When other EVM contracts interact with this interface, their requests are forwarded via JSON-RPC calls to the `asset` module, which directly handles and executes the necessary operations. This is achieved by creating a `dynamic precompile`, ensuring that the token’s behavior aligns with its internal state while still providing compatibility with the EVM ecosystem.
+
+The precompiles actions will depend on the `AllowExtensionList` when creating the token. Therefore different tokens will have precompiles with different addresses and extensions.
 
 ### EVM Precompiles
 

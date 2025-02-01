@@ -46,6 +46,7 @@ We introduce these optional calls to precompile to execute the token's extension
 - Freeze
 - TransferAuth
 
+
 It's important to note that each token has its own set of enabled extensions, the precompile linked to that token must also reflect that. In other words, for each precompile these calls will be enabled/disabled however the linked token's extensions be.
 
 ![asset_evm](imgs/asset_evm.png)
