@@ -12,9 +12,10 @@ The `x/asset` module keeps the following objects in state:
 |----------------------|----------------------------------------|-----------------------------------------------------------|---------------------------------------|-------|
 | `Params`             | Params of asset module                 | `[]byte{1}`                                               | `[]byte(params)`                      | KV    |
 | `Token`              | Token information                      | `[]byte{2} + []byte(token_id)`                            | `[]byte{token}`                       | KV    |
-| `TokenManagement`    | TokenManagement info of a denom        | `[]byte{3} + []byte(token_id)`                            | `[]byte{token_manager}`               | KV    |
+| `TokenExtensions`    | Token extensions info of a denom        | `[]byte{3} + []byte(token_id)`                            | `[]byte{token_manager}`               | KV    |
 | `WhitelistAddresses` | Whitelist Addresses                    | `[]byte{4} + []byte(address)`                             | `[]byte{bool}`                        | KV    |
 | `FreezeAddresses` | Whitelist Addresses                    | `[]byte{5} + []byte(address)`                             | `[]byte{bool}`                        | KV    |
+| `MaxSupply` | Maximum supply of token	| `[]byte{6} + []byte(token_id)`                            | `[]byte{int64}`                       | KV    |
 
 ### Token
 
@@ -34,13 +35,12 @@ type Token struct {
 
 When create the token, `asset` module auto generate for it a evm address. This address is used as a dynamic precompiles.
 
-### TokenManagement
+### TokenExtensions
 
 ```go
-type TokenManagement struct {
+type TokenExtensions struct {
 	Managers           []string              `protobuf:"bytes,1,rep,name=managers,proto3" json:"managers,omitempty"`
 	ExtensionsList     []string              `protobuf:"bytes,3,rep,name=extensions_list,json=extensionsList,proto3" json:"extensions_list,omitempty"`
-	MaxSupply          cosmossdk_io_math.Int `protobuf:"bytes,4,opt,name=max_supply,json=maxSupply,proto3,customtype=cosmossdk.io/math.Int" json:"max_supply"`
 }
 ```
 
