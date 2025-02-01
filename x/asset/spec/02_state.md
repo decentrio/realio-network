@@ -44,7 +44,7 @@ type TokenManagement struct {
 }
 ```
 
-`extensions_list` is the list of actions that user can execute. The `manager` can then modify the `extensions_list` as he sees fit.
+`extensions_list` is the list of actions that the manager can execute.
 
 `MaxSupply` defines the maximum number of tokens can be minted.
 
