@@ -12,7 +12,7 @@ The Realio Asset module is centered around a token model where certain whitelist
 
 Token extensions are additional features that can be flug-in for each token. There're are four types of extensions `Mint`, `Burn`, `Transfer Auth` and `Freeze`. The `Issuer` can choose what extensions to be included for his token at creation time, and only the `manager` can trigger the extension's logic.
 
-### EVM enable
+### EVM integration
 
 While it is the asset token in represented in the bank module, enabling the token interface in evm environment is very convenient and open up the possibility of integrating new features into the ecosystem.
 

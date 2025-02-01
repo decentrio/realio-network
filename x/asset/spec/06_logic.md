@@ -35,7 +35,7 @@ We'll go into details on how each of the extension works
 
 ### 
 
-## EVM interaction
+## EVM integration
 
 ### EVM interface
 
