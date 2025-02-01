@@ -43,7 +43,7 @@ Only manager is allowed to execute `TransferAuth`. Its will update the Token's I
 
 ### 
 
-## EVM interaction
+## EVM integration
 
 ### EVM interface
 

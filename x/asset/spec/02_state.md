@@ -32,10 +32,6 @@ type Token struct {
 }
 ```
 
-The token id for the token will be derived from the Issuer and the Symbol with the format of asset/{Issuer}/{Symbol-Lowercase}. This will allow 2 tokens to have the same name with different issuers.
-
-The `issuer` is the address that create token. They can control all informations about the token, define other whitelist roles likes `manager` and `distributor`. `issuer` also can enable the token's single evm representation mode, which is showed in [EVM precompiles](README.md#asset-module-and-erc-20-precompiles).
-
 When create the token, `asset` module auto generate for it a evm address. This address is used as a dynamic precompiles.
 
 ### TokenManagement
