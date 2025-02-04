@@ -3,11 +3,10 @@ package erc20
 import (
 	"testing"
 
-	erc20precompile "github.com/evmos/os/precompiles/erc20"
 	"github.com/evmos/os/testutil/integration/os/factory"
 	"github.com/evmos/os/testutil/integration/os/grpc"
 	testkeyring "github.com/evmos/os/testutil/integration/os/keyring"
-	"github.com/evmos/os/testutil/integration/os/network"
+	"github.com/realiotech/realio-network/testutil/integration/os/network"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -27,7 +26,7 @@ type PrecompileTestSuite struct {
 	grpcHandler grpc.Handler
 	keyring     testkeyring.Keyring
 
-	precompile *erc20precompile.Precompile
+	precompile *Precompile
 }
 
 func TestPrecompileTestSuite(t *testing.T) {

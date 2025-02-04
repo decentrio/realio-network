@@ -1,6 +1,7 @@
 package erc20
 
 import (
+	"fmt"
 	"math/big"
 	"time"
 
@@ -8,10 +9,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/evmos/os/precompiles/testutil"
-	utiltx "github.com/evmos/os/testutil/tx"
+	"github.com/evmos/os/testutil/integration/os/keyring"
 	erc20types "github.com/evmos/os/x/erc20/types"
 	"github.com/evmos/os/x/evm/core/vm"
 	"github.com/evmos/os/x/evm/statedb"
+	utiltx "github.com/realiotech/realio-network/testutil/tx"
+	assettypes "github.com/realiotech/realio-network/x/asset/types"
 )
 
 var (
@@ -253,6 +256,118 @@ func (s *PrecompileTestSuite) TestTransferFrom() {
 			if tc.expErr {
 				s.Require().Error(err, "expected transfer transaction to fail")
 				s.Require().Contains(err.Error(), tc.errContains, "expected transfer transaction to fail with specific error")
+			} else {
+				s.Require().NoError(err, "expected transfer transaction succeeded")
+				tc.postCheck()
+			}
+		})
+	}
+}
+
+func (s *PrecompileTestSuite) TestMint() {
+	method := s.precompile.Methods[MintMethod]
+	// fromAddr is the address of the keyring account used for testing.
+	sender := s.keyring.GetKey(0)
+	invalidSender := s.keyring.GetKey(1)
+	maxSupply := math.NewInt(200)
+	testcases := []struct {
+		name        string
+		malleate    func() []interface{}
+		postCheck   func()
+		expErr      bool
+		errContains string
+		sender      keyring.Key
+	}{
+		{
+			"fail - negative amount",
+			func() []interface{} {
+				return []interface{}{toAddr, big.NewInt(-1)}
+			},
+			func() {},
+			true,
+			"coin -1xmpl amount is not positive",
+			sender,
+		},
+		{
+			"fail - invalid to address",
+			func() []interface{} {
+				return []interface{}{"", big.NewInt(100)}
+			},
+			func() {},
+			true,
+			"invalid to address",
+			sender,
+		},
+		{
+			"fail - invalid amount",
+			func() []interface{} {
+				return []interface{}{toAddr, ""}
+			},
+			func() {},
+			true,
+			"invalid amount",
+			sender,
+		},
+		{
+			"fail - sender is not manager",
+			func() []interface{} {
+				return []interface{}{toAddr, big.NewInt(2e18)}
+			},
+			func() {},
+			true,
+			ErrTransferAmountExceedsBalance.Error(),
+			invalidSender,
+		},
+		{
+			"fail - exceed max supply",
+			func() []interface{} {
+				return []interface{}{toAddr, big.NewInt(300)}
+			},
+			func() {},
+			true,
+			"Exceed max supply",
+			invalidSender,
+		},
+		{
+			"pass",
+			func() []interface{} {
+				return []interface{}{toAddr, big.NewInt(100)}
+			},
+			func() {
+				toAddrBalance := s.network.App.BankKeeper.GetBalance(s.network.GetContext(), toAddr.Bytes(), tokenDenom)
+				s.Require().Equal(big.NewInt(100), toAddrBalance.Amount.BigInt(), "expected toAddr to have 100 XMPL")
+			},
+			false,
+			"",
+			sender,
+		},
+	}
+
+	for _, tc := range testcases {
+		s.Run(tc.name, func() {
+			s.SetupTest()
+			stateDB := s.network.GetStateDB()
+
+			var contract *vm.Contract
+			contract, ctx := testutil.NewPrecompileContract(s.T(), s.network.GetContext(), tc.sender.Addr, s.precompile, 0)
+
+			// Set up manager role for valid sender
+			err := s.precompile.assetKeep.TokenManagement.Set(
+				ctx, 
+				s.tokenDenom, 
+				assettypes.TokenManagement{
+					Managers: []string{sender.AccAddr.String()},
+					ExtensionsList: []string{"mint"},
+					MaxSupply: maxSupply,
+				},
+			)
+			s.Require().NoError(err)
+
+			_, err = s.precompile.Mint(ctx, contract, stateDB, &method, tc.malleate())
+			fmt.Println("errrrr", err)
+			if tc.expErr {
+				s.Require().Error(err, "expected mint transaction to fail")
+				// s.Require().Contains(err.Error(), tc.errContains, "expected transfer transaction to fail with specific error")
 			} else {
 				s.Require().NoError(err, "expected transfer transaction succeeded")
 				tc.postCheck()

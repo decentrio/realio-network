@@ -20,7 +20,7 @@ type Keeper struct {
 	cdc          codec.Codec
 	storeService store.KVStoreService
 	bk           types.BankKeeper
-	ak           types.AccountKeeper
+	Ak           types.AccountKeeper
 
 	// the address capable of executing a MsgUpdateParams message. Typically, this
 	// should be the x/gov module account.
@@ -49,7 +49,7 @@ func NewKeeper(
 		storeService:       storeService,
 		authority:          authority,
 		bk:                 bk,
-		ak:                 ak,
+		Ak:                 ak,
 		Params:             collections.NewItem(sb, types.ParamsKey, "params", codec.CollValue[types.Params](cdc)),
 		Token:              collections.NewMap(sb, types.TokenKey, "token", collections.StringKey, codec.CollValue[types.Token](cdc)),
 		TokenManagement:    collections.NewMap(sb, types.TokenManagementKey, "token_management", collections.StringKey, codec.CollValue[types.TokenManagement](cdc)),

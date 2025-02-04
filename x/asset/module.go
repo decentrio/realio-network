@@ -3,6 +3,7 @@ package asset
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	// this line is used by starport scaffolding # 1
 
@@ -24,7 +25,7 @@ import (
 var (
 	_ module.AppModuleBasic      = AppModule{}
 	_ module.AppModuleSimulation = AppModule{}
-	// _ module.HasGenesis          = AppModule{}
+	_ module.HasGenesis          = AppModule{}
 	// _ module.HasServices         = AppModule{}
 
 	_ appmodule.AppModule = AppModule{}
@@ -67,18 +68,18 @@ func (a AppModuleBasic) RegisterInterfaces(reg cdctypes.InterfaceRegistry) {
 }
 
 // DefaultGenesis returns the capability module's default genesis state.
-// func (AppModuleBasic) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
-// 	return cdc.MustMarshalJSON(types.DefaultGenesis())
-// }
+func (AppModuleBasic) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
+	return cdc.MustMarshalJSON(types.DefaultGenesis())
+}
 
 // ValidateGenesis performs genesis state validation for the capability module.
-// func (AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, _ client.TxEncodingConfig, bz json.RawMessage) error {
-// 	var genState types.GenesisState
-// 	if err := cdc.UnmarshalJSON(bz, &genState); err != nil {
-// 		return fmt.Errorf("failed to unmarshal %s genesis state: %w", types.ModuleName, err)
-// 	}
-// 	return genState.Validate()
-// }
+func (AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, _ client.TxEncodingConfig, bz json.RawMessage) error {
+	var genState types.GenesisState
+	if err := cdc.UnmarshalJSON(bz, &genState); err != nil {
+		return fmt.Errorf("failed to unmarshal %s genesis state: %w", types.ModuleName, err)
+	}
+	return genState.Validate()
+}
 
 // RegisterGRPCGatewayRoutes registers the gRPC Gateway routes for the module.
 func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *runtime.ServeMux) {

@@ -27,6 +27,7 @@ require (
 	github.com/cosmos/rosetta v0.50.10
 	github.com/ethereum/go-ethereum v1.11.5
 	github.com/evmos/os v0.0.0-20241002122822-02a9121016ee
+	github.com/evmos/os/example_chain v0.0.0-20250130185216-d2cab8abc34d
 	github.com/golang/protobuf v1.5.4
 	github.com/gorilla/mux v1.8.1
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
@@ -38,6 +39,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.10.0
+	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56
 	golang.org/x/sync v0.10.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20241015192408-796eee8c2d53
 	google.golang.org/grpc v1.69.2
@@ -113,7 +115,6 @@ require (
 	github.com/dvsekhvalnov/jose2go v1.7.0 // indirect
 	github.com/edsrzf/mmap-go v1.1.0 // indirect
 	github.com/emicklei/dot v1.6.2 // indirect
-	github.com/evmos/os/example_chain v0.0.0-20240924163020-b2a4187dad50 // indirect
 	github.com/fatih/color v1.17.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
@@ -235,7 +236,6 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/arch v0.3.0 // indirect
 	golang.org/x/crypto v0.32.0 // indirect
-	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56 // indirect
 	golang.org/x/net v0.34.0 // indirect
 	golang.org/x/oauth2 v0.23.0 // indirect
 	golang.org/x/sys v0.29.0 // indirect
@@ -262,9 +262,6 @@ replace (
 	github.com/ethereum/go-ethereum => github.com/evmos/go-ethereum v1.10.26-evmos-rc4
 
 	github.com/evmos/os => github.com/evmos/os v0.0.0-20250130185216-d2cab8abc34d
-	// use Realio sdk v0.46.11-realio-4
-	// github.com/cosmos/cosmos-sdk => github.com/realiotech/cosmos-sdk v0.46.11-realio-4
-	github.com/evmos/os/example_chain => github.com/evmos/os/example_chain v0.0.0-20250130185216-d2cab8abc34d
 
 	// github.com/realio-tech/multi-staking-module => ../multi-staking
 	// github.com/evmos/os => ../evmos-os

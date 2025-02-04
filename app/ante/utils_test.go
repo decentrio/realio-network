@@ -34,9 +34,9 @@ import (
 
 	"github.com/evmos/os/encoding"
 	"github.com/evmos/os/ethereum/eip712"
-	tests "github.com/evmos/os/testutil/tx"
 	"github.com/evmos/os/types"
 	evmtypes "github.com/evmos/os/x/evm/types"
+	tests "github.com/realiotech/realio-network/testutil/tx"
 
 	feemarkettypes "github.com/evmos/os/x/feemarket/types"
 

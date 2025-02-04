@@ -177,8 +177,9 @@ func (p *Precompile) mint(
 
 	minter := contract.CallerAddress
 	havePerm, err := p.assetKeep.IsTokenManager(ctx, p.denom, minter)
+	fmt.Println("have perm", havePerm, err)
 	if err != nil || !havePerm {
-		return nil, err
+		return nil, fmt.Errorf("Sender is not token manager")
 	}
 
 	mintToAddr := sdk.AccAddress(to.Bytes())

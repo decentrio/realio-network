@@ -4,6 +4,7 @@
 package erc20
 
 import (
+	"fmt"
 	"math/big"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -44,6 +45,8 @@ func (p Precompile) EmitTransferEvent(ctx sdk.Context, stateDB vm.StateDB, from,
 		return err
 	}
 
+	fmt.Println("event.Inputs", event.Inputs)
+
 	arguments := abi.Arguments{event.Inputs[2]}
 	packed, err := arguments.Pack(value)
 	if err != nil {
@@ -73,6 +76,8 @@ func (p Precompile) EmitMintEvent(ctx sdk.Context, stateDB vm.StateDB, to common
 	if err != nil {
 		return err
 	}
+
+	fmt.Println("event.Inputs", event.Inputs)
 
 	arguments := abi.Arguments{event.Inputs[1]}
 	packed, err := arguments.Pack(value)
