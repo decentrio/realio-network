@@ -180,7 +180,7 @@ func ParseBurnArgs(args []interface{}) (
 
 	amount, ok := args[0].(*big.Int)
 	if !ok {
-		return nil, fmt.Errorf("invalid amount: %v", args[1])
+		return nil, fmt.Errorf("invalid amount: %v", args[0])
 	}
 
 	return amount, nil

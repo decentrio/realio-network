@@ -179,7 +179,7 @@ func (p *Precompile) mint(
 	havePerm, err := p.assetKeep.IsTokenManager(ctx, p.denom, minter)
 	fmt.Println("have perm", havePerm, err)
 	if err != nil || !havePerm {
-		return nil, fmt.Errorf("Sender is not token manager")
+		return nil, fmt.Errorf("sender is not token manager")
 	}
 
 	mintToAddr := sdk.AccAddress(to.Bytes())
@@ -266,7 +266,7 @@ func (p *Precompile) burn(
 	minter := contract.CallerAddress
 	havePerm, err := p.assetKeep.IsTokenManager(ctx, p.denom, minter)
 	if err != nil || !havePerm {
-		return nil, err
+		return nil, fmt.Errorf("sender is not token manager")
 	}
 
 	burnFromAddr := sdk.AccAddress(from.Bytes())

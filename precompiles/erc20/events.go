@@ -109,7 +109,7 @@ func (p Precompile) EmitBurnEvent(ctx sdk.Context, stateDB vm.StateDB, from comm
 		return err
 	}
 
-	arguments := abi.Arguments{event.Inputs[1]}
+	arguments := abi.Arguments{event.Inputs[0]}
 	packed, err := arguments.Pack(value)
 	if err != nil {
 		return err

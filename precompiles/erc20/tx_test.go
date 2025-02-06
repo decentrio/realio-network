@@ -23,6 +23,8 @@ var (
 	XMPLCoin = sdk.NewCoins(sdk.NewInt64Coin(tokenDenom, 1e18))
 	// toAddr is a dummy address used for testing purposes.
 	toAddr = utiltx.GenerateAddress()
+	// toAddr is a dummy address used for testing purposes.
+	fromAddr = utiltx.GenerateAddress()
 )
 
 func (s *PrecompileTestSuite) TestTransfer() {
@@ -370,6 +372,240 @@ func (s *PrecompileTestSuite) TestMint() {
 				// s.Require().Contains(err.Error(), tc.errContains, "expected transfer transaction to fail with specific error")
 			} else {
 				s.Require().NoError(err, "expected transfer transaction succeeded")
+				tc.postCheck()
+			}
+		})
+	}
+}
+
+func (s *PrecompileTestSuite) TestBurn() {
+	method := s.precompile.Methods[MintMethod]
+	// fromAddr is the address of the keyring account used for testing.
+	sender := s.keyring.GetKey(0)
+	invalidSender := s.keyring.GetKey(1)
+	maxSupply := math.NewInt(200)
+	testcases := []struct {
+		name        string
+		malleate    func() []interface{}
+		postCheck   func()
+		expErr      bool
+		errContains string
+		sender      keyring.Key
+	}{
+		{
+			"fail - negative amount",
+			func() []interface{} {
+				return []interface{}{big.NewInt(-1)}
+			},
+			func() {},
+			true,
+			"coin -1xmpl amount is not positive",
+			sender,
+		},
+		{
+			"fail - invalid amount",
+			func() []interface{} {
+				return []interface{}{""}
+			},
+			func() {},
+			true,
+			"invalid amount",
+			sender,
+		},
+		{
+			"fail - sender is not manager",
+			func() []interface{} {
+				return []interface{}{big.NewInt(100)}
+			},
+			func() {},
+			true,
+			"sender is not token manager",
+			invalidSender,
+		},
+		{
+			"fail - not enough balance",
+			func() []interface{} {
+				return []interface{}{big.NewInt(300)}
+			},
+			func() {},
+			true,
+			"not enough balance",
+			sender,
+		},
+		{
+			"pass",
+			func() []interface{} {
+				return []interface{}{big.NewInt(100)}
+			},
+			func() {
+				addrBalance := s.network.App.BankKeeper.GetBalance(s.network.GetContext(), sender.AccAddr.Bytes(), tokenDenom)
+				s.Require().Equal(big.NewInt(100), addrBalance.Amount.BigInt(), "expected toAddr to have 100 XMPL")
+			},
+			false,
+			"",
+			sender,
+		},
+	}
+
+	for _, tc := range testcases {
+		s.Run(tc.name, func() {
+			s.SetupTest()
+			stateDB := s.network.GetStateDB()
+
+			var contract *vm.Contract
+			contract, ctx := testutil.NewPrecompileContract(s.T(), s.network.GetContext(), tc.sender.Addr, s.precompile, 0)
+
+			// Set up manager role for valid sender
+			err := s.precompile.assetKeep.TokenManagement.Set(
+				ctx, 
+				s.tokenDenom, 
+				assettypes.TokenManagement{
+					Managers: []string{sender.AccAddr.String()},
+					ExtensionsList: []string{"mint"},
+					MaxSupply: maxSupply,
+				},
+			)
+			s.Require().NoError(err)
+
+			// Mint amount to fromAddr to burn lately
+			// _, err = s.precompile.Mint(ctx, contract, stateDB, &method, []interface{}{sender.Addr, big.NewInt(maxSupply.Int64())})
+			// fmt.Println("errrrr", err)
+			// s.Require().NoError(err)
+
+			// Mint some coins to the module account and then send to the from address
+			err = s.network.App.BankKeeper.MintCoins(ctx, erc20types.ModuleName, sdk.NewCoins(sdk.NewCoin(tokenDenom, maxSupply)))
+			s.Require().NoError(err, "failed to mint coins")
+			err = s.network.App.BankKeeper.SendCoinsFromModuleToAccount(ctx, erc20types.ModuleName, sender.AccAddr, sdk.NewCoins(sdk.NewCoin(tokenDenom, maxSupply)))
+			s.Require().NoError(err, "failed to send coins from module to account")
+
+			_, err = s.precompile.Burn(ctx, contract, stateDB, &method, tc.malleate())
+			if tc.expErr {
+				s.Require().Error(err, "expected burn transaction to fail")
+				// s.Require().Contains(err.Error(), tc.errContains, "expected transfer transaction to fail with specific error")
+			} else {
+				s.Require().NoError(err, "expected burn transaction succeeded")
+				tc.postCheck()
+			}
+		})
+	}
+}
+
+func (s *PrecompileTestSuite) TestBurnFrom() {
+	method := s.precompile.Methods[MintMethod]
+	// fromAddr is the address of the keyring account used for testing.
+	sender := s.keyring.GetKey(0)
+	invalidSender := s.keyring.GetKey(1)
+	maxSupply := math.NewInt(200)
+	testcases := []struct {
+		name        string
+		malleate    func() []interface{}
+		postCheck   func()
+		expErr      bool
+		errContains string
+		sender      keyring.Key
+	}{
+		{
+			"fail - negative amount",
+			func() []interface{} {
+				return []interface{}{fromAddr, big.NewInt(-1)}
+			},
+			func() {},
+			true,
+			"coin -1xmpl amount is not positive",
+			sender,
+		},
+		{
+			"fail - invalid from address",
+			func() []interface{} {
+				return []interface{}{"", big.NewInt(100)}
+			},
+			func() {},
+			true,
+			"invalid from address",
+			sender,
+		},
+		{
+			"fail - invalid amount",
+			func() []interface{} {
+				return []interface{}{fromAddr, ""}
+			},
+			func() {},
+			true,
+			"invalid amount",
+			sender,
+		},
+		{
+			"fail - sender is not manager",
+			func() []interface{} {
+				return []interface{}{fromAddr, big.NewInt(100)}
+			},
+			func() {},
+			true,
+			"sender is not token manager",
+			invalidSender,
+		},
+		{
+			"fail - not enough balance",
+			func() []interface{} {
+				return []interface{}{fromAddr, big.NewInt(300)}
+			},
+			func() {},
+			true,
+			"not enough balance",
+			sender,
+		},
+		{
+			"pass",
+			func() []interface{} {
+				return []interface{}{fromAddr, big.NewInt(100)}
+			},
+			func() {
+				addrBalance := s.network.App.BankKeeper.GetBalance(s.network.GetContext(), fromAddr.Bytes(), tokenDenom)
+				s.Require().Equal(big.NewInt(100), addrBalance.Amount.BigInt(), "expected toAddr to have 100 XMPL")
+			},
+			false,
+			"",
+			sender,
+		},
+	}
+
+	for _, tc := range testcases {
+		s.Run(tc.name, func() {
+			s.SetupTest()
+			stateDB := s.network.GetStateDB()
+
+			var contract *vm.Contract
+			contract, ctx := testutil.NewPrecompileContract(s.T(), s.network.GetContext(), tc.sender.Addr, s.precompile, 0)
+
+			// Set up manager role for valid sender
+			err := s.precompile.assetKeep.TokenManagement.Set(
+				ctx, 
+				s.tokenDenom, 
+				assettypes.TokenManagement{
+					Managers: []string{sender.AccAddr.String()},
+					ExtensionsList: []string{"mint"},
+					MaxSupply: maxSupply,
+				},
+			)
+			s.Require().NoError(err)
+
+			// Mint amount to fromAddr to burn lately
+			// _, err = s.precompile.Mint(ctx, contract, stateDB, &method, []interface{}{sender.Addr, big.NewInt(maxSupply.Int64())})
+			// fmt.Println("errrrr", err)
+			// s.Require().NoError(err)
+
+			// Mint some coins to the module account and then send to the from address
+			err = s.network.App.BankKeeper.MintCoins(ctx, erc20types.ModuleName, sdk.NewCoins(sdk.NewCoin(tokenDenom, maxSupply)))
+			s.Require().NoError(err, "failed to mint coins")
+			err = s.network.App.BankKeeper.SendCoinsFromModuleToAccount(ctx, erc20types.ModuleName, fromAddr.Bytes(), sdk.NewCoins(sdk.NewCoin(tokenDenom, maxSupply)))
+			s.Require().NoError(err, "failed to send coins from module to account")
+
+			_, err = s.precompile.BurnFrom(ctx, contract, stateDB, &method, tc.malleate())
+			if tc.expErr {
+				s.Require().Error(err, "expected burn transaction to fail")
+				// s.Require().Contains(err.Error(), tc.errContains, "expected transfer transaction to fail with specific error")
+			} else {
+				s.Require().NoError(err, "expected burn transaction succeeded")
 				tc.postCheck()
 			}
 		})
