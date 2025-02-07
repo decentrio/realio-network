@@ -125,6 +125,29 @@ func (p Precompile) EmitBurnEvent(ctx sdk.Context, stateDB vm.StateDB, from comm
 	return nil
 }
 
+func (p Precompile) EmitFreezeEvent(ctx sdk.Context, stateDB vm.StateDB, to common.Address) error {
+	// Prepare the event topics
+	event := p.ABI.Events[EventTypeBurn]
+	topics := make([]common.Hash, 2)
+
+	// The first topic is always the signature of the event.
+	topics[0] = event.ID
+
+	var err error
+	topics[1], err = cmn.MakeTopic(to)
+	if err != nil {
+		return err
+	}
+
+	stateDB.AddLog(&ethtypes.Log{
+		Address:     p.Address(),
+		Topics:      topics,
+		BlockNumber: uint64(ctx.BlockHeight()), //nolint:gosec // G115 // block height won't exceed uint64
+	})
+
+	return nil
+}
+
 // EmitApprovalEvent creates a new approval event emitted on Approve, IncreaseAllowance
 // and DecreaseAllowance transactions.
 func (p Precompile) EmitApprovalEvent(ctx sdk.Context, stateDB vm.StateDB, owner, spender common.Address, value *big.Int) error {

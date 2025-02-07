@@ -190,8 +190,11 @@ func (p *Precompile) HandleMethod(
 	method *abi.Method,
 	args []interface{},
 ) (bz []byte, err error) {
-	params, err := p.assetKeep.GetParams(ctx)
-	allowedMethods := params.AllowExtensions
+	tm, err := p.assetKeep.GetTokenManager(ctx, p.denom)
+	if err != nil {
+		return nil, err
+	}	
+	allowedMethods := tm.ExtensionsList
 	if err != nil {
 		return nil, err
 	}
@@ -216,6 +219,11 @@ func (p *Precompile) HandleMethod(
 			return nil, fmt.Errorf("method %s is not supported", BurnFromMethod)
 		}
 		bz, err = p.BurnFrom(ctx, contract, stateDB, method, args)
+	case FreezeMethod:
+		if !slices.Contains(allowedMethods, FreezeMethod) {
+			return nil, fmt.Errorf("method %s is not supported", FreezeMethod)
+		}
+		bz, err = p.Freeze(ctx, contract, stateDB, method, args)
 	case auth.ApproveMethod:
 		bz, err = p.Approve(ctx, contract, stateDB, method, args)
 	case auth.IncreaseAllowanceMethod:

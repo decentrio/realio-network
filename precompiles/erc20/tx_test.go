@@ -379,7 +379,7 @@ func (s *PrecompileTestSuite) TestMint() {
 }
 
 func (s *PrecompileTestSuite) TestBurn() {
-	method := s.precompile.Methods[MintMethod]
+	method := s.precompile.Methods[BurnMethod]
 	// fromAddr is the address of the keyring account used for testing.
 	sender := s.keyring.GetKey(0)
 	invalidSender := s.keyring.GetKey(1)
@@ -491,7 +491,7 @@ func (s *PrecompileTestSuite) TestBurn() {
 }
 
 func (s *PrecompileTestSuite) TestBurnFrom() {
-	method := s.precompile.Methods[MintMethod]
+	method := s.precompile.Methods[BurnFromMethod]
 	// fromAddr is the address of the keyring account used for testing.
 	sender := s.keyring.GetKey(0)
 	invalidSender := s.keyring.GetKey(1)
@@ -601,6 +601,90 @@ func (s *PrecompileTestSuite) TestBurnFrom() {
 			s.Require().NoError(err, "failed to send coins from module to account")
 
 			_, err = s.precompile.BurnFrom(ctx, contract, stateDB, &method, tc.malleate())
+			if tc.expErr {
+				s.Require().Error(err, "expected burn transaction to fail")
+				// s.Require().Contains(err.Error(), tc.errContains, "expected transfer transaction to fail with specific error")
+			} else {
+				s.Require().NoError(err, "expected burn transaction succeeded")
+				tc.postCheck()
+			}
+		})
+	}
+}
+
+func (s *PrecompileTestSuite) TestFreeze() {
+	method := s.precompile.Methods[FreezeMethod]
+	// fromAddr is the address of the keyring account used for testing.
+	sender := s.keyring.GetKey(0)
+	invalidSender := s.keyring.GetKey(1)
+	testcases := []struct {
+		name        string
+		malleate    func() []interface{}
+		postCheck   func()
+		expErr      bool
+		errContains string
+		sender      keyring.Key
+	}{
+		{
+			"fail - invalid to address",
+			func() []interface{} {
+				return []interface{}{""}
+			},
+			func() {},
+			true,
+			"invalid from address",
+			sender,
+		},
+		{
+			"fail - sender is not manager",
+			func() []interface{} {
+				return []interface{}{toAddr}
+			},
+			func() {},
+			true,
+			"sender is not token manager",
+			invalidSender,
+		},
+		{
+			"pass",
+			func() []interface{} {
+				return []interface{}{toAddr}
+			},
+			func() {
+				exist := s.network.App.AssetKeeper.IsFreezed(s.network.GetContext(), toAddr)
+				s.Require().True(exist)
+			},
+			false,
+			"",
+			sender,
+		},
+	}
+
+	for _, tc := range testcases {
+		s.Run(tc.name, func() {
+			s.SetupTest()
+			stateDB := s.network.GetStateDB()
+
+			var contract *vm.Contract
+			contract, ctx := testutil.NewPrecompileContract(s.T(), s.network.GetContext(), tc.sender.Addr, s.precompile, 0)
+
+			// Set up manager role for valid sender
+			err := s.precompile.assetKeep.TokenManagement.Set(
+				ctx, 
+				s.tokenDenom, 
+				assettypes.TokenManagement{
+					Managers: []string{sender.AccAddr.String()},
+					ExtensionsList: []string{"mint"},
+				},
+			)
+			s.Require().NoError(err)
+
+			// Mint amount to fromAddr to burn lately
+			// _, err = s.precompile.Mint(ctx, contract, stateDB, &method, []interface{}{sender.Addr, big.NewInt(maxSupply.Int64())})
+			// fmt.Println("errrrr", err)
+			// s.Require().NoError(err)
+
+			_, err = s.precompile.Freeze(ctx, contract, stateDB, &method, tc.malleate())
 			if tc.expErr {
 				s.Require().Error(err, "expected burn transaction to fail")
 				// s.Require().Contains(err.Error(), tc.errContains, "expected transfer transaction to fail with specific error")

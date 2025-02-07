@@ -225,6 +225,12 @@ func (p Precompile) createAuthorization(ctx sdk.Context, grantee, granter common
 	coins := sdk.Coins{{Denom: p.denom, Amount: sdkmath.NewIntFromBigInt(amount)}}
 	expiration := ctx.BlockTime().Add(p.ApprovalExpiration)
 
+	// Check if granter is freezed
+	freezed := p.assetKeep.IsFreezed(ctx, granter)
+	if freezed {
+		return fmt.Errorf("address %s already be freezed", granter.String())
+	}
+
 	// NOTE: we leave the allowed arg empty as all recipients are allowed (per ERC20 standard)
 	authorization := banktypes.NewSendAuthorization(coins, []sdk.AccAddress{})
 	if err := authorization.ValidateBasic(); err != nil {

@@ -205,3 +205,20 @@ func ParseBurnFromArgs(args []interface{}) (
 
 	return from, amount, nil
 }
+
+func ParseFreezeArgs(args []interface{}) (
+	from common.Address, err error,
+) {
+	if len(args) != 1 {
+		return common.Address{}, fmt.Errorf("invalid number of arguments; expected 1; got: %d", len(args))
+	}
+
+	to, ok := args[0].(common.Address)
+	if !ok {
+		return common.Address{}, fmt.Errorf("invalid to address: %v", args[0])
+	}
+
+	return to, nil
+}
+
+

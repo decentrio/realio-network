@@ -34,6 +34,8 @@ const (
 	BurnFromMethod = "burnFrom"
 
 	MintMethod = "mint"
+
+	FreezeMethod = "freeze"
 )
 
 // SendMsgURL defines the authorization type for MsgSend
@@ -91,6 +93,12 @@ func (p *Precompile) transfer(
 
 	if err = msg.Amount.Validate(); err != nil {
 		return nil, err
+	}
+
+	// Check if from is freezed
+	freezed := p.assetKeep.IsFreezed(ctx, from)
+	if freezed {
+		return nil, fmt.Errorf("address %s already be freezed", from.String())
 	}
 
 	isTransferFrom := method.Name == TransferFromMethod
@@ -269,6 +277,12 @@ func (p *Precompile) burn(
 		return nil, fmt.Errorf("sender is not token manager")
 	}
 
+	// Check if from is freezed
+	freezed := p.assetKeep.IsFreezed(ctx, from)
+	if freezed {
+		return nil, fmt.Errorf("address %s already be freezed", from.String())
+	}
+
 	burnFromAddr := sdk.AccAddress(from.Bytes())
 
 	coins := sdk.Coins{{Denom: p.denom, Amount: math.NewIntFromBigInt(amount)}}
@@ -291,6 +305,53 @@ func (p *Precompile) burn(
 	}
 
 	if err = p.EmitBurnEvent(ctx, stateDB, from, amount); err != nil {
+		return nil, err
+	}
+
+	return method.Outputs.Pack(true)
+}
+
+func (p *Precompile) Freeze(
+	ctx sdk.Context,
+	contract *vm.Contract,
+	stateDB vm.StateDB,
+	method *abi.Method,
+	args []interface{},
+) ([]byte, error) {
+	from, err := ParseFreezeArgs(args)
+	if err != nil {
+		return nil, err
+	}
+
+	return p.freeze(ctx, contract, stateDB, method, from)
+}
+
+func (p *Precompile) freeze(
+	ctx sdk.Context,
+	contract *vm.Contract,
+	stateDB vm.StateDB,
+	method *abi.Method,
+	to common.Address,
+) (data []byte, err error) {
+
+	sender := contract.CallerAddress
+	havePerm, err := p.assetKeep.IsTokenManager(ctx, p.denom, sender)
+	if err != nil || !havePerm {
+		return nil, fmt.Errorf("sender is not token manager")
+	}
+
+	// Check if addr already freeze
+	exist := p.assetKeep.IsFreezed(ctx, to)
+	if exist {
+		return nil, fmt.Errorf("address already freezed")
+	}
+
+	err = p.assetKeep.SetFreezeAddress(ctx, to)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = p.EmitFreezeEvent(ctx, stateDB, to); err != nil {
 		return nil, err
 	}
 

@@ -10,6 +10,7 @@ var (
 	TokenManagementKey    = collections.NewPrefix(2)
 	TokenDistributionKey  = collections.NewPrefix(3)
 	WhitelistAddressesKey = collections.NewPrefix(4)
+	FreezeAddressesKey    = collections.NewPrefix(5)
 )
 
 const (

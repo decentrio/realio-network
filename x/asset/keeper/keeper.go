@@ -31,6 +31,7 @@ type Keeper struct {
 	Token              collections.Map[string, types.Token]
 	TokenManagement    collections.Map[string, types.TokenManagement]
 	WhitelistAddresses collections.Map[string, bool]
+	FreezeAddresses    collections.Map[[]byte, bool]
 }
 
 // NewKeeper returns a new Keeper object with a given codec, dedicated
@@ -54,6 +55,7 @@ func NewKeeper(
 		Token:              collections.NewMap(sb, types.TokenKey, "token", collections.StringKey, codec.CollValue[types.Token](cdc)),
 		TokenManagement:    collections.NewMap(sb, types.TokenManagementKey, "token_management", collections.StringKey, codec.CollValue[types.TokenManagement](cdc)),
 		WhitelistAddresses: collections.NewMap(sb, types.WhitelistAddressesKey, "whitelist_addresses", collections.StringKey, collections.BoolValue),
+		FreezeAddresses:    collections.NewMap(sb, types.FreezeAddressesKey, "freeze_addresses", collections.BytesKey, collections.BoolValue),
 	}
 
 	schema, err := sb.Build()
@@ -105,7 +107,7 @@ func (k Keeper) IsTokenManager(ctx context.Context, tokenId string, addr common.
 	exist := false
 	tm, err := k.TokenManagement.Get(ctx, tokenId)
 	if err != nil {
-		return false, nil
+		return false, err
 	}
 	for _, manager := range tm.Managers {
 		if bytes.Equal(addr.Bytes(), sdk.MustAccAddressFromBech32(manager).Bytes()) {
@@ -114,6 +116,22 @@ func (k Keeper) IsTokenManager(ctx context.Context, tokenId string, addr common.
 		}
 	}
 	return exist, nil
+}
+
+func (k Keeper) IsFreezed(ctx context.Context, addr common.Address) bool {
+	exist, err := k.FreezeAddresses.Get(ctx, addr.Bytes())
+	if err != nil {
+		return false
+	}
+	return exist
+}
+
+func (k Keeper) SetFreezeAddress(ctx context.Context, addr common.Address)  error {
+	err := k.FreezeAddresses.Set(ctx, addr.Bytes(), true)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (k Keeper) GetToken(ctx context.Context, tokenId string) (types.Token, error) {
