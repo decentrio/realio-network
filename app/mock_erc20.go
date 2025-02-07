@@ -30,12 +30,12 @@ func NewEmptyMockErc20Keeper() MockErc20Keeper {
 
 func (k MockErc20Keeper) GetERC20PrecompileInstance(ctx sdk.Context, addr common.Address) (contract vm.PrecompiledContract, found bool, err error) {
 	// Check if contract address in list
-	exist, err := k.assetKeeper.EVMContractExist(ctx, addr)
+	exist, denom, err := k.assetKeeper.EVMContractExist(ctx, addr)
 	if err != nil || !exist {
 		return nil, false, nil
 	}
 
-	precompile, err := erc20.NewPrecompile(addr, k.bankKeeper, k.authzKeeper, *k.transferKeeper, k.assetKeeper)
+	precompile, err := erc20.NewPrecompile(denom, addr, k.bankKeeper, k.authzKeeper, *k.transferKeeper, k.assetKeeper)
 	if err != nil {
 		return nil, false, nil
 	}

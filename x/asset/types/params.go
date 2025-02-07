@@ -8,7 +8,9 @@ import (
 
 // NewParams creates a new Params instance
 func NewParams() Params {
-	return Params{}
+	return Params{
+		AllowExtensions: []string{"transfer", "mint"},
+	}
 }
 
 // DefaultParams returns a default set of parameters

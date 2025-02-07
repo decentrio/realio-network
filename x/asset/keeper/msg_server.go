@@ -52,22 +52,16 @@ func (ms msgServer) CreateToken(ctx context.Context, msg *types.MsgCreateToken) 
 	// Create a evm addr from tokenId
 	evmAddr := common.BytesToAddress([]byte(tokenId))
 
-	token := types.NewToken(tokenId, msg.Name, msg.Decimal, msg.Description, msg.Symbol, msg.Issuer, evmAddr.Hex())
+	token := types.NewToken(tokenId, msg.Name, msg.Decimal, msg.Description, msg.Symbol, msg.Issuer, evmAddr.String())
 	err := ms.Token.Set(ctx, tokenId, token)
 	if err != nil {
 		return nil, errorsmod.Wrap(types.ErrTokenSet, err.Error())
 	}
 
-	tokenManagement := types.NewTokenManagement(msg.Managers, msg.AllowNewExtensions, msg.ExtensionsList)
+	tokenManagement := types.NewTokenManagement(msg.Managers, msg.AllowNewExtensions, msg.ExtensionsList, msg.MaxSupply)
 	err = ms.TokenManagement.Set(ctx, tokenId, tokenManagement)
 	if err != nil {
 		return nil, errorsmod.Wrap(types.ErrTokenManagementSet, err.Error())
-	}
-
-	tokenDistribution := types.NewTokenDistribution(msg.Distributors, msg.MaxSupply)
-	err = ms.TokenDistribution.Set(ctx, tokenId, tokenDistribution)
-	if err != nil {
-		return nil, errorsmod.Wrap(types.ErrTokenDistributionSet, err.Error())
 	}
 
 	ms.bk.SetDenomMetaData(ctx, banktypes.Metadata{
@@ -117,19 +111,6 @@ func (ms msgServer) AssignRoles(ctx context.Context, msg *types.MsgAssignRoles) 
 		return nil, errorsmod.Wrap(types.ErrTokenManagementSet, err.Error())
 	}
 
-	tokenDistribution, err := ms.TokenDistribution.Get(ctx, msg.TokenId)
-	if err != nil {
-		return nil, errorsmod.Wrapf(types.ErrTokenDistributionGet, err.Error())
-	}
-	newDistributors := append(tokenDistribution.Distributors, msg.Distributors...)
-	slices.Sort(newDistributors)
-	tokenDistribution.Distributors = slices.Compact(newDistributors)
-
-	err = ms.TokenDistribution.Set(ctx, msg.TokenId, tokenDistribution)
-	if err != nil {
-		return nil, errorsmod.Wrap(types.ErrTokenDistributionSet, err.Error())
-	}
-
 	sdkCtx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeTokenAuthorizeUpdated,
@@ -167,19 +148,6 @@ func (ms msgServer) UnassignRoles(ctx context.Context, msg *types.MsgUnassignRol
 	err = ms.TokenManagement.Set(ctx, msg.TokenId, tokenManagement)
 	if err != nil {
 		return nil, errorsmod.Wrap(types.ErrTokenManagementSet, err.Error())
-	}
-
-	tokenDistribution, err := ms.TokenDistribution.Get(ctx, msg.TokenId)
-	if err != nil {
-		return nil, errorsmod.Wrapf(types.ErrTokenDistributionGet, err.Error())
-	}
-
-	tokenDistribution.Distributors = slices.DeleteFunc(tokenDistribution.Distributors, func(distributor string) bool {
-		return slices.Contains(msg.Distributors, distributor)
-	})
-	err = ms.TokenDistribution.Set(ctx, msg.TokenId, tokenDistribution)
-	if err != nil {
-		return nil, errorsmod.Wrap(types.ErrTokenDistributionSet, err.Error())
 	}
 
 	sdkCtx.EventManager().EmitEvent(

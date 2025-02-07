@@ -12,13 +12,13 @@ order: 4
     type MsgIssueToken struct {
         Issuer                     address
         Managers                   [ ]address
-        Distributors               [ ]address
         Name                       string   
         Symbol                     string   
         Decimal                    uint32   
         Description                string 
-        AllowNewExtensions         bool
         ExtensionsList             [ ]string
+        Distributor                [ ]string
+        InitialSupply              [ ]math.Int
     }
 ```
 
@@ -38,7 +38,6 @@ Example token.json:
 ```json
    {
       "Manager": ["realioabc..."],
-      "Distributor": ["realioabc2..."],
       "Symbol": "riel",
       "Decimal": 18,
       "Description": "",
@@ -61,27 +60,27 @@ Flow:
 4. Save the token basic information (name, symbol, decimal and description) in the x/bank metadata store
 5. Save the token management info and distribution info in the x/asset store.
 
-## 2. AssignRoles
+## 2. AssignManagers
 
-`MsgAssignRoles` allow issue to set role likes manager or distributor for the token.
+`MsgAssignManagers` allow issue to set managers for the token.
 
 ```go
-    type MsgAssignRoles struct {
+    type MsgAssignManagers struct {
         TokenId         string
         Issuer          address
-        Addresses       mapping[Role]([]addresses)
+        Addresses       []addresses
     }
 ```
 
 ```go
-    type MsgAssignRolesResponse struct {
+    type MsgAssignManagersResponse struct {
     }
 ```
 
 CLI:
 
 ```bash
-    realio-networkd tx assign-roles [privilege.json] [flags]
+    realio-networkd tx assign-managers [privilege.json] [flags]
 ```
 
 Example privilege.json:
@@ -91,14 +90,8 @@ Example privilege.json:
         "TokenId": "asset/realio1.../tokena",
         "Issuer": "realio1...",
         "Assign": [
-            {
-                "role": 1 (manager),
-                "addresses": ["realio2..."],
-            },
-            {
-                "role": 2 (distributor),
-                "addresses": ["realio3..."],
-            }
+            "realio2...",
+            "realio3..."
         ]
     }
 ```
@@ -109,14 +102,13 @@ Validation:
 - Check if caller is issuer of the token
 - Check if addresses is valid
 - Check if manager doesn't exist in the current managers list of token
-- Check if distributor doesn't exist in the current distributor list of token
 
 Flow:
 
-- Get `TokenManager` and `TokenDistributor` from store by token_id
-- Loop through addresses and append manager addresses to `TokenManager.Managers`, distributor addresses to `TokenDistributor.Distributors`
+- Get `TokenManager` from store by token_id
+- Loop through addresses and append manager addresses to `TokenManager.Managers`
 
-## 3. UnassignRoles
+## 3. UnassignManager
 
 ```go
     type MsgUnassignRoles struct {
@@ -136,22 +128,23 @@ Validation:
 - Check if token exists
 - Check if caller is issuer of the token
 - Check if addresses is valid
-- Check if addresses is in `TokenManager.Managers` or `TokenDistributor.Distributors`
+- Check if addresses is in `TokenExtensions.Managers` 
 
 Flow:
 
-- Get `TokenManager` and `TokenDistributor` from store by token_id
-- Loop through addresses and remove manager addresses from `TokenManager.Managers`, distributor addresses to `TokenDistributor.Distributors`
+- Get `TokenManager` from store by token_id
+- Loop through addresses and remove manager addresses from `TokenManager.Managers`
 
-## 4. ExecuteExtension
+## 4. Burn
 
-After setting the managers, the managers can execute their allowed extension.
+This msg only can be executed when the token's `ExtensionsList` has `burn` extension.
 
 ```go
-    type MsgExecuteExtension struct {
+    type MsgBurn struct {
         Manager              address     
         TokenId              string     
-        ExtensionMsg     *types.Any
+        BurnFromAddr         address
+        Amount               math.Int
     }
 ```
 
@@ -159,13 +152,15 @@ Validation:
 
 - Checks if the token specified in the msg exists.
 - Checks if the extension is supported.
-- Checks if the `Msg.Address` has the corresponding `Extension` specified by `ExtensionMsg.NeedExtension()`
+- Check if addresses is valid
+- Checks if the address is in `TokenManager.Managers`
+- Checks if address is freezed in `FreezeAddresses`
 
 Flow:
 
-- Prepare store for the extension of the token via `MakeExtensionStore(extension name, token denom)`. That store is the only store accessable by the extension's `MsgHandler`.
-- `ExtensionMsgRouting` routes the `ExtensionMsg` to the its `MsgHandler`.
-- `MsgHandler` now handles the `ExtensionMsg`.
+- Get `TokenManager` from store by token_id
+- Check if `BurnFromAddr` has enough token to burn
+- Burn the asset from `BurnFromAddr`
 
 ### 5. Mint
 
@@ -173,7 +168,7 @@ This msg only can be executed when the token's `ExtensionsList` has `mint` exten
 
 ```go
     type MsgMint struct {
-        Distributor          address     
+        Manager              address     
         TokenId              string
         Receiver             address
         Amount               math.Int
@@ -185,24 +180,24 @@ Validation:
 - Checks if the token specified in the msg exists.
 - Checks if the extension is supported.
 - Check if addresses is valid
-- Checks if the distributor address is in `TokenDistributor.Distributors`
-- Checks if mint amount exceed `MaxSupply` or `MaxRatelimit`.
+- Checks if the address is in `TokenManager.Managers`
+- Checks if mint amount exceed `MaxSupply`.
 
 Flow:
 
-- Get `TokenDistributor` from store by token_id
+- Get `TokenManager` from store by token_id
 - Mint the asset for corresponding receiver
-- Increase the Maxsupply in TokenDistribution store.
+- Increase the supply.
 
-### 6. UpdateDistributionSetting
+### 6. Freeze
 
-Distributor can change the max supply of the token.
+This msg only can be executed when the token's `ExtensionsList` has `freeze` extension.
 
 ```go
-    type MsgUpdateDistributionSetting struct {
-        Distributor          address     
+    type MsgFreeze struct {
+        Manager              address     
         TokenId              string
-        NewSettings          DistributionSettings
+        Receiver             address
     }
 ```
 
@@ -210,25 +205,26 @@ Validation:
 
 - Checks if the token specified in the msg exists.
 - Checks if the extension is supported.
-- Checks if the distributor address is in `TokenDistributor.Distributors`
-- Checks if current supply exceed new settings `MaxSupply`
+- Check if addresses is valid
+- Checks if the address is in `TokenManager.Managers`
 
-### 7. UpdateExtensionsList
+Flow:
 
-Manager can update the `ExtensionsList` of the token. This only can be executed when the token's `AllowNewExtensions` is enable.
+- Get `TokenManager` from store by token_id
+- Set address into `FreezeAddresses`
+- All account in `FreezeAddresses` can not be transfer token out or burned.
+
+### 7. Set max supply
 
 ```go
-    type ExtensionsList struct {
-        Manager              address     
-        TokenId              string
-        NewExtensions   []string
+    type MsgSetMaxSupply struct {
+        Manager                    address
+        TokenId                    string
+        MaxSupply                  int64
     }
 ```
 
-Validation:
+This message can only executed once, it will set the maximum supply for the token
 
-- Checks if the token specified in the msg exists.
-- Checks if manager addresses is in `TokenManager.Managers`
-- Checks if the new extension is supported.
 
-### 8. UpdateParams
+

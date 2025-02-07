@@ -51,12 +51,12 @@ func (p Precompile) Name(
 	method *abi.Method,
 	_ []interface{},
 ) ([]byte, error) {
-	metadata, found := p.BankKeeper.GetDenomMetaData(ctx, p.tokenPair.Denom)
+	metadata, found := p.BankKeeper.GetDenomMetaData(ctx, p.denom)
 	if found {
 		return method.Outputs.Pack(metadata.Name)
 	}
 
-	baseDenom, err := p.getBaseDenomFromIBCVoucher(ctx, p.tokenPair.Denom)
+	baseDenom, err := p.getBaseDenomFromIBCVoucher(ctx, p.denom)
 	if err != nil {
 		return nil, ConvertErrToERC20Error(err)
 	}
@@ -75,12 +75,12 @@ func (p Precompile) Symbol(
 	method *abi.Method,
 	_ []interface{},
 ) ([]byte, error) {
-	metadata, found := p.BankKeeper.GetDenomMetaData(ctx, p.tokenPair.Denom)
+	metadata, found := p.BankKeeper.GetDenomMetaData(ctx, p.denom)
 	if found {
 		return method.Outputs.Pack(metadata.Symbol)
 	}
 
-	baseDenom, err := p.getBaseDenomFromIBCVoucher(ctx, p.tokenPair.Denom)
+	baseDenom, err := p.getBaseDenomFromIBCVoucher(ctx, p.denom)
 	if err != nil {
 		return nil, ConvertErrToERC20Error(err)
 	}
@@ -99,9 +99,9 @@ func (p Precompile) Decimals(
 	method *abi.Method,
 	_ []interface{},
 ) ([]byte, error) {
-	metadata, found := p.BankKeeper.GetDenomMetaData(ctx, p.tokenPair.Denom)
+	metadata, found := p.BankKeeper.GetDenomMetaData(ctx, p.denom)
 	if !found {
-		denomTrace, err := ibc.GetDenomTrace(p.transferKeeper, ctx, p.tokenPair.Denom)
+		denomTrace, err := ibc.GetDenomTrace(p.transferKeeper, ctx, p.denom)
 		if err != nil {
 			return nil, ConvertErrToERC20Error(err)
 		}
@@ -129,7 +129,7 @@ func (p Precompile) Decimals(
 	if !displayFound {
 		return nil, ConvertErrToERC20Error(fmt.Errorf(
 			"display denomination not found for denom: %q",
-			p.tokenPair.Denom,
+			p.denom,
 		))
 	}
 
@@ -152,7 +152,7 @@ func (p Precompile) TotalSupply(
 	method *abi.Method,
 	_ []interface{},
 ) ([]byte, error) {
-	supply := p.BankKeeper.GetSupply(ctx, p.tokenPair.Denom)
+	supply := p.BankKeeper.GetSupply(ctx, p.denom)
 
 	return method.Outputs.Pack(supply.Amount.BigInt())
 }
@@ -171,7 +171,7 @@ func (p Precompile) BalanceOf(
 		return nil, err
 	}
 
-	balance := p.BankKeeper.GetBalance(ctx, account.Bytes(), p.tokenPair.Denom)
+	balance := p.BankKeeper.GetBalance(ctx, account.Bytes(), p.denom)
 
 	return method.Outputs.Pack(balance.Amount.BigInt())
 }
@@ -196,7 +196,7 @@ func (p Precompile) Allowance(
 		return method.Outputs.Pack(abi.MaxUint256)
 	}
 
-	_, _, allowance, err := GetAuthzExpirationAndAllowance(p.AuthzKeeper, ctx, spender, owner, p.tokenPair.Denom)
+	_, _, allowance, err := GetAuthzExpirationAndAllowance(p.AuthzKeeper, ctx, spender, owner, p.denom)
 	if err != nil {
 		// NOTE: We are not returning the error here, because we want to align the behavior with
 		// standard ERC20 smart contracts, which return zero if an allowance is not found.
