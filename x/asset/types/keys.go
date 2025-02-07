@@ -1,14 +1,16 @@
 package types
 
 import (
-	"strings"
-
 	"cosmossdk.io/collections"
 )
 
 var (
-	ParamsKey      = collections.NewPrefix(0)
-	TokenKeyPrefix = collections.NewPrefix("Token/value/")
+	ParamsKey             = collections.NewPrefix(0)
+	TokenKey              = collections.NewPrefix(1)
+	TokenManagementKey    = collections.NewPrefix(2)
+	TokenDistributionKey  = collections.NewPrefix(3)
+	WhitelistAddressesKey = collections.NewPrefix(4)
+	FreezeAddressesKey    = collections.NewPrefix(5)
 )
 
 const (
@@ -33,11 +35,4 @@ var PortKey = KeyPrefix("asset-port-")
 
 func KeyPrefix(p string) []byte {
 	return []byte(p)
-}
-
-// TokenKey returns the store key to retrieve a Token from the index fields
-func TokenKey(
-	index string,
-) string {
-	return strings.ToLower(index) + "/"
 }

@@ -6,8 +6,10 @@ order: 3
 
 The asset module contains the following parameters:
 
-| Key           | Type            | Example                |
-|---------------|-----------------|------------------------|
-| port          | string          | "ario"                 |
-| InflationRate | string (dec)    | "0.130000000000000000" |
-| BlocksPerYear | string (uint64) | "6311520"              |
+| Key                  | Type          | Example                |
+|----------------------|---------------|------------------------|
+| AllowExtensions      | []string      | ["burn","freeze"]      |
+
+## Details
+
+- AllowExtensions: list of extensions that the module provides. They can be update after the chain upgrade to enable new extension add-on to the module.

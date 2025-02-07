@@ -6,4 +6,7 @@ import "gogoproto/gogo.proto";
 option go_package = "github.com/realiotech/realio-network/x/asset/types";
 
 // Params defines the parameters for the module.
-message Params { option (gogoproto.goproto_stringer) = false; }
+message Params { 
+    option (gogoproto.goproto_stringer) = false; 
+    repeated string allow_extensions = 1;
+}

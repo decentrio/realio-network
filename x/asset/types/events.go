@@ -2,12 +2,10 @@ package types
 
 // staking module event types
 const (
-	EventTypeTokenCreated      = "create_token"
-	EventTypeTokenUpdated      = "update_token"
-	EventTypeTokenAuthorized   = "authorize_token"
-	EventTypeTokenUnAuthorized = "unauthorize_token"
+	EventTypeTokenCreated          = "create_token"
+	EventTypeTokenAuthorizeUpdated = "update_authorize_token"
 
-	AttributeKeySymbol  = "symbol"
+	AttributeKeyTokenId = "token_id"
 	AttributeKeyIndex   = "index"
 	AttributeKeyAddress = "address"
 

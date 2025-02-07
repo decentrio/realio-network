@@ -6,28 +6,14 @@ order: 1
 
 ## The Realio Asset Token Model
 
-The Realio Asset module is centeredd aroumd a token model. It contains the following fields:
+The Realio Asset module is centered around a token model where certain whitelisted accounts can issue their own token. A token issued by this module will be managed by `manager` accounts assigned by the issuer of the asset.
 
-```protobuf
-message Token {
-  string name = 1;
-  string symbol = 2;
-  int64 total = 3;
-  int64 decimals = 4;
-  bool authorizationRequired = 5;
-  string creator = 6;
-  map<string, TokenAuthorization> authorized = 7;
-  int64 created = 8;
-}
+### Token extensions
 
-```
+Token extensions are additional features that can be flug-in for each token. There're are four types of extensions `Mint`, `Burn`, `Transfer Auth` and `Freeze`. The `Issuer` can choose what extensions to be included for his token at creation time, and only the `manager` can trigger the extension's logic.
 
-### Token Authorization
+### EVM integration
 
-The `Token` model provides a means to whitelist users via the `authorizationRequired` and `authorized` fields
-A token that has the `authorizationRequired` turned on, can maintain a whitelist map of user addresses. These addresses
-are the only ones able to send/receive the token. The Realio Network is agnostic to the logic of applications that use
-the whitelisting. It is up to the clients to determine when to whitelist and what to do with it. 
+While it is the asset token in represented in the bank module, enabling the token interface in evm environment is very convenient and open up the possibility of integrating new features into the ecosystem.
 
-
-
+Each token is automatically enabled to work in the evm environment when created, which means user can interact with the token through evm side like metamask or anyother evm wallet and more other protocol integrated in the future.
