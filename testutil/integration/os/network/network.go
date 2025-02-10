@@ -23,7 +23,7 @@ import (
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	gethparams "github.com/ethereum/go-ethereum/params"
-	chainutil "github.com/realiotech/realio-network/example_chain/testutil"
+	chainutil "github.com/evmos/os/example_chain/testutil"
 	commonnetwork "github.com/evmos/os/testutil/integration/common/network"
 	"github.com/evmos/os/types"
 	erc20types "github.com/evmos/os/x/erc20/types"

@@ -26,7 +26,7 @@ import (
 	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 	"github.com/evmos/os/cmd/config"
 	feemarkettypes "github.com/evmos/os/x/feemarket/types"
-	chainconfig "github.com/realiotech/realio-network/example_chain/osd/config"
+	chainconfig "github.com/evmos/os/example_chain/osd/config"
 	"github.com/stretchr/testify/require"
 )
 

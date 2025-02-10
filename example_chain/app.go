@@ -118,7 +118,7 @@ import (
 	"github.com/evmos/os/x/feemarket"
 	feemarketkeeper "github.com/evmos/os/x/feemarket/keeper"
 	feemarkettypes "github.com/evmos/os/x/feemarket/types"
-	chainante "github.com/realiotech/realio-network/example_chain/ante"
+	chainante "github.com/evmos/os/example_chain/ante"
 	"github.com/spf13/cast"
 
 	// NOTE: override ICS20 keeper to support IBC transfers of ERC20 tokens

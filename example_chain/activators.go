@@ -4,7 +4,7 @@ package example_chain
 
 import (
 	"github.com/evmos/os/x/evm/core/vm"
-	"github.com/realiotech/realio-network/example_chain/eips"
+	"github.com/evmos/os/example_chain/eips"
 )
 
 // evmosActivators defines a map of opcode modifiers associated
