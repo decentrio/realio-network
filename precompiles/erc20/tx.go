@@ -277,12 +277,6 @@ func (p *Precompile) burn(
 		return nil, fmt.Errorf("sender is not token manager")
 	}
 
-	// Check if from is freezed
-	freezed := p.assetKeep.IsFreezed(ctx, from)
-	if freezed {
-		return nil, fmt.Errorf("address %s already be freezed", from.String())
-	}
-
 	burnFromAddr := sdk.AccAddress(from.Bytes())
 
 	coins := sdk.Coins{{Denom: p.denom, Amount: math.NewIntFromBigInt(amount)}}

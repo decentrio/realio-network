@@ -115,7 +115,7 @@ func (s *PrecompileTestSuite) TestTransfer() {
 }
 
 func (s *PrecompileTestSuite) TestTransferFrom() {
-	var (
+	var ( 
 		ctx  sdk.Context
 		stDB *statedb.StateDB
 	)
@@ -178,6 +178,17 @@ func (s *PrecompileTestSuite) TestTransferFrom() {
 			ErrInsufficientAllowance.Error(),
 		},
 		{
+			"fail - owner was freezed",
+			func() []interface{} {
+				err := s.network.App.AssetKeeper.SetFreezeAddress(ctx, owner.Addr)
+				s.Require().NoError(err)
+				return []interface{}{owner.Addr, toAddr, big.NewInt(100)}
+			},
+			func() {},
+			true,
+			"already be freezed",
+		},
+		{
 			"fail - not enough balance",
 			func() []interface{} {
 				expiration := time.Now().Add(time.Hour)
@@ -217,6 +228,28 @@ func (s *PrecompileTestSuite) TestTransferFrom() {
 			},
 			false,
 			"",
+		},
+		{
+			"fail - spend on behalf of freezed account",
+			func() []interface{} {
+				expiration := time.Now().Add(time.Hour)
+				err := s.network.App.AuthzKeeper.SaveGrant(
+					ctx,
+					spender.AccAddr,
+					owner.AccAddr,
+					&banktypes.SendAuthorization{SpendLimit: sdk.Coins{sdk.Coin{Denom: tokenDenom, Amount: math.NewInt(300)}}},
+					&expiration,
+				)
+				s.Require().NoError(err, "failed to save grant")
+
+				err = s.network.App.AssetKeeper.SetFreezeAddress(ctx, owner.Addr)
+				s.Require().NoError(err)
+
+				return []interface{}{owner.Addr, toAddr, big.NewInt(100)}
+			},
+			func() {},
+			true,
+			"already be freezed",
 		},
 		{
 			"pass - spend on behalf of own account",
