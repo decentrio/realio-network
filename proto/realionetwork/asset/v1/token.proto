@@ -39,6 +39,4 @@ enum Role {
   ROLE_UNSPECIFIED = 0 [(gogoproto.enumvalue_customname) = "EmptyRole"];
   // ROLE_MANAGER defines a token manager role.
   ROLE_MANAGER = 1 [(gogoproto.enumvalue_customname) = "ManagerRole"];
-  // ROLE_DISTRIBUTOR defines a token distributor role.
-  ROLE_DISTRIBUTOR = 2 [(gogoproto.enumvalue_customname) = "DistributorRole"];
 }

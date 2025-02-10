@@ -16,7 +16,6 @@ func NewMsgCreateToken(issuer string, name string, symbol string, description st
 		Description:        description,
 		Decimal:            decimal,
 		Managers:           managers,
-		Distributors:       distributors,
 		ExtensionsList:     extensionsList,
 		AllowNewExtensions: allowNewExtensions,
 	}
@@ -34,21 +33,14 @@ func (msg *MsgCreateToken) ValidateBasic() error {
 		}
 	}
 
-	for _, distributor := range msg.Distributors {
-		_, err := sdk.AccAddressFromBech32(distributor)
-		if err != nil {
-			return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid distributor address (%s): %s", distributor, err)
-		}
-	}
 	return nil
 }
 
-func NewMsgAssignRoles(issuer string, tokenId string, managers []string, distributors []string) *MsgAssignRoles {
+func NewMsgAssignRoles(issuer string, tokenId string, managers []string) *MsgAssignRoles {
 	return &MsgAssignRoles{
 		Issuer:       issuer,
 		TokenId:      tokenId,
 		Managers:     managers,
-		Distributors: distributors,
 	}
 }
 
@@ -65,22 +57,14 @@ func (msg *MsgAssignRoles) ValidateBasic() error {
 		}
 	}
 
-	for _, distributor := range msg.Distributors {
-		_, err := sdk.AccAddressFromBech32(distributor)
-		if err != nil {
-			return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid distributor address (%s): %s", distributor, err)
-		}
-	}
-
 	return ValidateTokenId(msg.TokenId)
 }
 
-func NewMsgUnassignRoles(issuer string, tokenId string, managers []string, distributors []string) *MsgUnassignRoles {
+func NewMsgUnassignRoles(issuer string, tokenId string, managers []string) *MsgUnassignRoles {
 	return &MsgUnassignRoles{
 		Issuer:       issuer,
 		TokenId:      tokenId,
 		Managers:     managers,
-		Distributors: distributors,
 	}
 }
 
@@ -94,13 +78,6 @@ func (msg *MsgUnassignRoles) ValidateBasic() error {
 		_, err := sdk.AccAddressFromBech32(manager)
 		if err != nil {
 			return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid manager address (%s): %s", manager, err)
-		}
-	}
-
-	for _, distributor := range msg.Distributors {
-		_, err := sdk.AccAddressFromBech32(distributor)
-		if err != nil {
-			return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid distributor address (%s): %s", distributor, err)
 		}
 	}
 

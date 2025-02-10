@@ -29,7 +29,6 @@ message MsgCreateToken {
   string symbol = 4;
   string description = 5;
   repeated string managers = 6;
-  repeated string distributors = 7;
   bool allow_new_extensions = 8;
   repeated string extensions_list = 9;
   string max_supply = 10 [
@@ -49,7 +48,6 @@ message MsgAssignRoles {
 
   string token_id = 2;
   repeated string managers = 3;
-  repeated string distributors = 4;
 }
 
 message MsgAssignRolesResponse {}
@@ -61,7 +59,6 @@ message MsgUnassignRoles {
 
   string token_id = 2;
   repeated string managers = 3;
-  repeated string distributors = 4;
 }
 
 message MsgUnassignRolesResponse {}
