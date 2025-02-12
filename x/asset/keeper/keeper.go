@@ -30,7 +30,7 @@ type Keeper struct {
 	Params             collections.Item[types.Params]
 	Token              collections.Map[string, types.Token]
 	TokenManagement    collections.Map[string, types.TokenManagement]
-	WhitelistAddresses collections.Map[string, bool]
+	WhitelistAddresses collections.Map[[]byte, bool]
 	FreezeAddresses    collections.Map[[]byte, bool]
 }
 
@@ -54,7 +54,7 @@ func NewKeeper(
 		Params:             collections.NewItem(sb, types.ParamsKey, "params", codec.CollValue[types.Params](cdc)),
 		Token:              collections.NewMap(sb, types.TokenKey, "token", collections.StringKey, codec.CollValue[types.Token](cdc)),
 		TokenManagement:    collections.NewMap(sb, types.TokenManagementKey, "token_management", collections.StringKey, codec.CollValue[types.TokenManagement](cdc)),
-		WhitelistAddresses: collections.NewMap(sb, types.WhitelistAddressesKey, "whitelist_addresses", collections.StringKey, collections.BoolValue),
+		WhitelistAddresses: collections.NewMap(sb, types.WhitelistAddressesKey, "whitelist_addresses", collections.BytesKey, collections.BoolValue),
 		FreezeAddresses:    collections.NewMap(sb, types.FreezeAddressesKey, "freeze_addresses", collections.BytesKey, collections.BoolValue),
 	}
 
@@ -71,7 +71,7 @@ func (k Keeper) Logger(ctx context.Context) log.Logger {
 	return sdkCtx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-func (k Keeper) GetWhitelistAddress(ctx context.Context, address string) bool {
+func (k Keeper) GetWhitelistAddress(ctx context.Context, address []byte) bool {
 	found, err := k.WhitelistAddresses.Get(ctx, address)
 	if err != nil {
 		return false
@@ -103,19 +103,31 @@ func (k Keeper) GetParams(ctx context.Context) (types.Params, error) {
 	return k.Params.Get(ctx)
 }
 
-func (k Keeper) IsTokenManager(ctx context.Context, tokenId string, addr common.Address) (bool, error) {
+func (k Keeper) IsTokenManager(ctx context.Context, tokenId string, addr []byte) (bool, error) {
 	exist := false
 	tm, err := k.TokenManagement.Get(ctx, tokenId)
 	if err != nil {
 		return false, err
 	}
 	for _, manager := range tm.Managers {
-		if bytes.Equal(addr.Bytes(), sdk.MustAccAddressFromBech32(manager).Bytes()) {
+		if bytes.Equal(addr, manager) {
 			exist = true
 			break
 		}
 	}
 	return exist, nil
+}
+
+func (k Keeper) IsTokenOwner(ctx context.Context, tokenId string, addr []byte) (bool, error) {
+	token, err := k.Token.Get(ctx, tokenId)
+	if err != nil {
+		return false, err
+	}
+	
+	if bytes.Equal(token.Issuer, addr) {
+		return true, nil
+	}
+	return false, nil
 }
 
 func (k Keeper) IsFreezed(ctx context.Context, addr common.Address) bool {

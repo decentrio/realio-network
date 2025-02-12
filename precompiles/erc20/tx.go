@@ -184,7 +184,7 @@ func (p *Precompile) mint(
 ) (data []byte, err error) {
 
 	minter := contract.CallerAddress
-	havePerm, err := p.assetKeep.IsTokenManager(ctx, p.denom, minter)
+	havePerm, err := p.assetKeep.IsTokenManager(ctx, p.denom, minter.Bytes())
 	fmt.Println("have perm", havePerm, err)
 	if err != nil || !havePerm {
 		return nil, fmt.Errorf("sender is not token manager")
@@ -272,7 +272,7 @@ func (p *Precompile) burn(
 ) (data []byte, err error) {
 
 	minter := contract.CallerAddress
-	havePerm, err := p.assetKeep.IsTokenManager(ctx, p.denom, minter)
+	havePerm, err := p.assetKeep.IsTokenManager(ctx, p.denom, minter.Bytes())
 	if err != nil || !havePerm {
 		return nil, fmt.Errorf("sender is not token manager")
 	}
@@ -329,7 +329,7 @@ func (p *Precompile) freeze(
 ) (data []byte, err error) {
 
 	sender := contract.CallerAddress
-	havePerm, err := p.assetKeep.IsTokenManager(ctx, p.denom, sender)
+	havePerm, err := p.assetKeep.IsTokenManager(ctx, p.denom, sender.Bytes())
 	if err != nil || !havePerm {
 		return nil, fmt.Errorf("sender is not token manager")
 	}

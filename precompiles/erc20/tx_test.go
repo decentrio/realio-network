@@ -391,7 +391,7 @@ func (s *PrecompileTestSuite) TestMint() {
 				ctx, 
 				s.tokenDenom, 
 				assettypes.TokenManagement{
-					Managers: []string{sender.AccAddr.String()},
+					Managers: [][]byte{sender.AccAddr},
 					ExtensionsList: []string{"mint"},
 					MaxSupply: maxSupply,
 				},
@@ -493,7 +493,7 @@ func (s *PrecompileTestSuite) TestBurn() {
 				ctx, 
 				s.tokenDenom, 
 				assettypes.TokenManagement{
-					Managers: []string{sender.AccAddr.String()},
+					Managers: [][]byte{sender.AccAddr},
 					ExtensionsList: []string{"mint"},
 					MaxSupply: maxSupply,
 				},
@@ -615,7 +615,7 @@ func (s *PrecompileTestSuite) TestBurnFrom() {
 				ctx, 
 				s.tokenDenom, 
 				assettypes.TokenManagement{
-					Managers: []string{sender.AccAddr.String()},
+					Managers: [][]byte{sender.AccAddr},
 					ExtensionsList: []string{"mint"},
 					MaxSupply: maxSupply,
 				},
@@ -706,7 +706,7 @@ func (s *PrecompileTestSuite) TestFreeze() {
 				ctx, 
 				s.tokenDenom, 
 				assettypes.TokenManagement{
-					Managers: []string{sender.AccAddr.String()},
+					Managers: [][]byte{sender.AccAddr},
 					ExtensionsList: []string{"mint"},
 				},
 			)
