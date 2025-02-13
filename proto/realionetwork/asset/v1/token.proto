@@ -8,7 +8,7 @@ option go_package = "github.com/realiotech/realio-network/x/asset/types";
 // Token represents an asset in the module
 message Token {
   string token_id = 1;
-  string issuer = 2;
+  bytes issuer = 2;
   string name = 3;
   string symbol = 4;
   uint32 decimal = 5;
@@ -18,18 +18,13 @@ message Token {
 
 // TokenManagement represents the asset manager's execute functions.
 message TokenManagement {
-  repeated string managers = 1;
+  repeated bytes managers = 1;
   bool allow_new_extensions = 2;
   repeated string extensions_list = 3;
-}
-
-// TokenDistribution represents the asset manager's execute functions.
-message TokenDistribution {
-  repeated string distributors = 1;
-  string max_supply = 2 [
+  string max_supply = 4 [
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
-  ]; 
+  ];
 }
 
 enum Role {
@@ -39,6 +34,4 @@ enum Role {
   ROLE_UNSPECIFIED = 0 [(gogoproto.enumvalue_customname) = "EmptyRole"];
   // ROLE_MANAGER defines a token manager role.
   ROLE_MANAGER = 1 [(gogoproto.enumvalue_customname) = "ManagerRole"];
-  // ROLE_DISTRIBUTOR defines a token distributor role.
-  ROLE_DISTRIBUTOR = 2 [(gogoproto.enumvalue_customname) = "DistributorRole"];
 }

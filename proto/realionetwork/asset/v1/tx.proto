@@ -22,14 +22,13 @@ service Msg {
 message MsgCreateToken {
   option (cosmos.msg.v1.signer) = "issuer";
   // issuer is the address that defines the token
-  string issuer = 1;
+  bytes issuer = 1;
 
   string name = 2;
   uint32 decimal = 3;
   string symbol = 4;
   string description = 5;
-  repeated string managers = 6;
-  repeated string distributors = 7;
+  repeated bytes managers = 6;
   bool allow_new_extensions = 8;
   repeated string extensions_list = 9;
   string max_supply = 10 [
@@ -45,11 +44,10 @@ message MsgCreateTokenResponse {
 message MsgAssignRoles {
   option (cosmos.msg.v1.signer) = "issuer";
   // issuer is the address that defines the token
-  string issuer = 1;
+  bytes issuer = 1;
 
   string token_id = 2;
-  repeated string managers = 3;
-  repeated string distributors = 4;
+  bytes managers = 3;
 }
 
 message MsgAssignRolesResponse {}
@@ -57,11 +55,10 @@ message MsgAssignRolesResponse {}
 message MsgUnassignRoles {
   option (cosmos.msg.v1.signer) = "issuer";
   // issuer is the address that defines the token
-  string issuer = 1;
+  bytes issuer = 1;
 
   string token_id = 2;
-  repeated string managers = 3;
-  repeated string distributors = 4;
+  bytes managers = 3;
 }
 
 message MsgUnassignRolesResponse {}

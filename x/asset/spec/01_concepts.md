@@ -6,18 +6,14 @@ order: 1
 
 ## The Realio Asset Token Model
 
-The Realio Asset module is centered around a token model where certain whitelisted accounts can issue their own token. A token issued by this module will be managed by a set of `manager` and `distributor` accounts. These accounts are assigned role by the issuer of the asset.
+The Realio Asset module is centered around a token model where certain whitelisted accounts can issue their own token. A token issued by this module will be managed by `manager` accounts assigned by the issuer of the asset.
 
-### System of privileged accounts
+### Token extensions
 
-Privileged accounts of a token are accounts that can execute certain actions for that token. There're are several types of extensions, each has its own state and logic to define the actions which accounts of said type can execute. We wanna decouple the logic of these extensions from the `Asset module` logic, meaning that extensions will be defined in separate packages/modules, thus, developers can customize their type of extension without modifying the `Asset Module`. Doing this allows our extensions system to be extensible while keeping the core logic of `Asset Module` untouched and simple, avoiding complicated migration when we expand our extensions system.
+Token extensions are additional features that can be flug-in for each token. There're are four types of extensions `Mint`, `Burn`, `Transfer Auth` and `Freeze`. The `Issuer` can choose what extensions to be included for his token at creation time, and only the `manager` can trigger the extension's logic.
 
-In order for a extension to integrate into the `Asset Module`. It has to implement the `Extension` interface and has its implementation registered via the method `AddExtension`. Once that is done, we can make said extension available onchain by executing `SoftwareUpgradeProposal` like a regular chain upgrade process.
+### EVM integration
 
-Currently, there are 2 type of privileged accounts: `manager` and `distributor`. Each can execute different extensions. While `distributor` can control the `mint` extension and custom the `DistributionSettings`, the `manager` can execute the other extensions like `burn` or `freeze` and could modify the  `extensions_list`. It's important to note that the `manager` can choose what extensions it wants to disable for its token.
-
-### EVM enable
-
-While it is useful to represent the token in bank module, enabling the token to be in action in evm environment is very convenient and pave the possibility of integrating new features into the ecosystem.
+While it is the asset token in represented in the bank module, enabling the token interface in evm environment is very convenient and open up the possibility of integrating new features into the ecosystem.
 
 Each token is automatically enabled to work in the evm environment when created, which means user can interact with the token through evm side like metamask or anyother evm wallet and more other protocol integrated in the future.

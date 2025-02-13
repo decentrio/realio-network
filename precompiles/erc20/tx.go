@@ -4,6 +4,7 @@
 package erc20
 
 import (
+	"fmt"
 	"math/big"
 
 	errorsmod "cosmossdk.io/errors"
@@ -17,6 +18,7 @@ import (
 	cmn "github.com/evmos/os/precompiles/common"
 	"github.com/evmos/os/x/evm/core/vm"
 	evmtypes "github.com/evmos/os/x/evm/types"
+	assettypes "github.com/realiotech/realio-network/x/asset/types"
 )
 
 const (
@@ -26,6 +28,14 @@ const (
 	// TransferFromMethod defines the ABI method name for the ERC-20 transferFrom
 	// transaction.
 	TransferFromMethod = "transferFrom"
+
+	BurnMethod = "burn"
+
+	BurnFromMethod = "burnFrom"
+
+	MintMethod = "mint"
+
+	FreezeMethod = "freeze"
 )
 
 // SendMsgURL defines the authorization type for MsgSend
@@ -77,12 +87,18 @@ func (p *Precompile) transfer(
 	from, to common.Address,
 	amount *big.Int,
 ) (data []byte, err error) {
-	coins := sdk.Coins{{Denom: p.tokenPair.Denom, Amount: math.NewIntFromBigInt(amount)}}
+	coins := sdk.Coins{{Denom: p.denom, Amount: math.NewIntFromBigInt(amount)}}
 
 	msg := banktypes.NewMsgSend(from.Bytes(), to.Bytes(), coins)
 
 	if err = msg.Amount.Validate(); err != nil {
 		return nil, err
+	}
+
+	// Check if from is freezed
+	freezed := p.assetKeep.IsFreezed(ctx, from)
+	if freezed {
+		return nil, fmt.Errorf("address %s already be freezed", from.String())
 	}
 
 	isTransferFrom := method.Name == TransferFromMethod
@@ -96,7 +112,7 @@ func (p *Precompile) transfer(
 		msgSrv := bankkeeper.NewMsgServerImpl(p.BankKeeper)
 		_, err = msgSrv.Send(ctx, msg)
 	} else {
-		_, _, prevAllowance, err = GetAuthzExpirationAndAllowance(p.AuthzKeeper, ctx, spenderAddr, from, p.tokenPair.Denom)
+		_, _, prevAllowance, err = GetAuthzExpirationAndAllowance(p.AuthzKeeper, ctx, spenderAddr, from, p.denom)
 		if err != nil {
 			return nil, ConvertErrToERC20Error(errorsmod.Wrap(err, authz.ErrNoAuthorizationFound.Error()))
 		}
@@ -111,7 +127,7 @@ func (p *Precompile) transfer(
 	}
 
 	evmDenom := evmtypes.GetEVMCoinDenom()
-	if p.tokenPair.Denom == evmDenom {
+	if p.denom == evmDenom {
 		convertedAmount := evmtypes.ConvertAmountTo18DecimalsBigInt(amount)
 		p.SetBalanceChangeEntries(cmn.NewBalanceChangeEntry(from, convertedAmount, cmn.Sub),
 			cmn.NewBalanceChangeEntry(to, convertedAmount, cmn.Add))
@@ -137,6 +153,199 @@ func (p *Precompile) transfer(
 	}
 
 	if err = p.EmitApprovalEvent(ctx, stateDB, from, spenderAddr, newAllowance); err != nil {
+		return nil, err
+	}
+
+	return method.Outputs.Pack(true)
+}
+
+func (p *Precompile) Mint(
+	ctx sdk.Context,
+	contract *vm.Contract,
+	stateDB vm.StateDB,
+	method *abi.Method,
+	args []interface{},
+) ([]byte, error) {
+	to, amount, err := ParseMintArgs(args)
+	if err != nil {
+		return nil, err
+	}
+
+	return p.mint(ctx, contract, stateDB, method, to, amount)
+}
+
+func (p *Precompile) mint(
+	ctx sdk.Context,
+	contract *vm.Contract,
+	stateDB vm.StateDB,
+	method *abi.Method,
+	to common.Address,
+	amount *big.Int,
+) (data []byte, err error) {
+
+	minter := contract.CallerAddress
+	havePerm, err := p.assetKeep.IsTokenManager(ctx, p.denom, minter.Bytes())
+	fmt.Println("have perm", havePerm, err)
+	if err != nil || !havePerm {
+		return nil, fmt.Errorf("sender is not token manager")
+	}
+
+	mintToAddr := sdk.AccAddress(to.Bytes())
+
+	coins := sdk.Coins{{Denom: p.denom, Amount: math.NewIntFromBigInt(amount)}}
+
+	// Check if new supply exceed max supply
+
+	tm, err := p.assetKeep.GetTokenManager(ctx, p.denom)
+	if err != nil {
+		return nil, err
+	}
+	maxSupply := tm.MaxSupply
+	currentSupply := p.BankKeeper.GetSupply(ctx, p.denom).Amount
+	newSupply := currentSupply.Add(math.NewIntFromBigInt(amount))
+	if newSupply.GT(maxSupply) {
+		return nil, ConvertErrToERC20Error(fmt.Errorf("Exceed max supply, expected: %d, got: %d", maxSupply, newSupply))
+	}
+
+	// Mint coins to asset module then transfer to minter addr
+	err = p.BankKeeper.MintCoins(ctx, assettypes.ModuleName, coins)
+	if err != nil {
+		return nil, ConvertErrToERC20Error(err)
+	}
+
+	err = p.BankKeeper.SendCoinsFromModuleToAccount(ctx, assettypes.ModuleName, mintToAddr, coins)
+	if err != nil {
+		return nil, ConvertErrToERC20Error(err)
+	}
+
+	evmDenom := evmtypes.GetEVMCoinDenom()
+	if p.denom == evmDenom {
+		convertedAmount := evmtypes.ConvertAmountTo18DecimalsBigInt(amount)
+		p.SetBalanceChangeEntries(cmn.NewBalanceChangeEntry(to, convertedAmount, cmn.Add))
+	}
+
+	if err = p.EmitMintEvent(ctx, stateDB, to, amount); err != nil {
+		return nil, err
+	}
+
+	return method.Outputs.Pack(true)
+}
+
+func (p *Precompile) Burn(
+	ctx sdk.Context,
+	contract *vm.Contract,
+	stateDB vm.StateDB,
+	method *abi.Method,
+	args []interface{},
+) ([]byte, error) {
+	from := contract.CallerAddress
+	amount, err := ParseBurnArgs(args)
+	if err != nil {
+		return nil, err
+	}
+
+	return p.burn(ctx, contract, stateDB, method, from, amount)
+}
+
+func (p *Precompile) BurnFrom(
+	ctx sdk.Context,
+	contract *vm.Contract,
+	stateDB vm.StateDB,
+	method *abi.Method,
+	args []interface{},
+) ([]byte, error) {
+	from, amount, err := ParseBurnFromArgs(args)
+	if err != nil {
+		return nil, err
+	}
+
+	return p.burn(ctx, contract, stateDB, method, from, amount)
+}
+
+func (p *Precompile) burn(
+	ctx sdk.Context,
+	contract *vm.Contract,
+	stateDB vm.StateDB,
+	method *abi.Method,
+	from common.Address,
+	amount *big.Int,
+) (data []byte, err error) {
+
+	minter := contract.CallerAddress
+	havePerm, err := p.assetKeep.IsTokenManager(ctx, p.denom, minter.Bytes())
+	if err != nil || !havePerm {
+		return nil, fmt.Errorf("sender is not token manager")
+	}
+
+	burnFromAddr := sdk.AccAddress(from.Bytes())
+
+	coins := sdk.Coins{{Denom: p.denom, Amount: math.NewIntFromBigInt(amount)}}
+
+	// Transfer to asset module then burn
+	err = p.BankKeeper.SendCoinsFromAccountToModule(ctx, burnFromAddr, assettypes.ModuleName, coins)
+	if err != nil {
+		return nil, ConvertErrToERC20Error(err)
+	}
+
+	err = p.BankKeeper.BurnCoins(ctx, assettypes.ModuleName, coins)
+	if err != nil {
+		return nil, ConvertErrToERC20Error(err)
+	}
+
+	evmDenom := evmtypes.GetEVMCoinDenom()
+	if p.denom == evmDenom {
+		convertedAmount := evmtypes.ConvertAmountTo18DecimalsBigInt(amount)
+		p.SetBalanceChangeEntries(cmn.NewBalanceChangeEntry(from, convertedAmount, cmn.Add))
+	}
+
+	if err = p.EmitBurnEvent(ctx, stateDB, from, amount); err != nil {
+		return nil, err
+	}
+
+	return method.Outputs.Pack(true)
+}
+
+func (p *Precompile) Freeze(
+	ctx sdk.Context,
+	contract *vm.Contract,
+	stateDB vm.StateDB,
+	method *abi.Method,
+	args []interface{},
+) ([]byte, error) {
+	from, err := ParseFreezeArgs(args)
+	if err != nil {
+		return nil, err
+	}
+
+	return p.freeze(ctx, contract, stateDB, method, from)
+}
+
+func (p *Precompile) freeze(
+	ctx sdk.Context,
+	contract *vm.Contract,
+	stateDB vm.StateDB,
+	method *abi.Method,
+	to common.Address,
+) (data []byte, err error) {
+
+	sender := contract.CallerAddress
+	havePerm, err := p.assetKeep.IsTokenManager(ctx, p.denom, sender.Bytes())
+	if err != nil || !havePerm {
+		return nil, fmt.Errorf("sender is not token manager")
+	}
+
+	// Check if addr already freeze
+	exist := p.assetKeep.IsFreezed(ctx, to)
+	if exist {
+		return nil, fmt.Errorf("address already freezed")
+	}
+
+	err = p.assetKeep.SetFreezeAddress(ctx, to)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = p.EmitFreezeEvent(ctx, stateDB, to); err != nil {
 		return nil, err
 	}
 
