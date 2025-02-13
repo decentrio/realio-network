@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"strings"
@@ -81,25 +80,9 @@ func (ms msgServer) CreateToken(ctx context.Context, msg *types.MsgCreateToken) 
 func (ms msgServer) AssignRoles(ctx context.Context, msg *types.MsgAssignRoles) (*types.MsgAssignRolesResponse, error) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
-	token, err := ms.Token.Get(ctx, msg.TokenId)
+	err := ms.Keeper.GrantRole(ctx, msg.TokenId, msg.Issuer, msg.Managers)
 	if err != nil {
-		return nil, errorsmod.Wrapf(types.ErrTokenGet, err.Error())
-	}
-
-	if !bytes.Equal(msg.Issuer, token.Issuer) {
-		return nil, errorsmod.Wrapf(types.ErrUnauthorize, "issuer not the creator of the token")
-	}
-
-	tokenManagement, err := ms.TokenManagement.Get(ctx, msg.TokenId)
-	if err != nil {
-		return nil, errorsmod.Wrapf(types.ErrTokenManagementGet, err.Error())
-	}
-	newManagers := append(tokenManagement.Managers, msg.Managers...)
-	tokenManagement.Managers = newManagers
-
-	err = ms.TokenManagement.Set(ctx, msg.TokenId, tokenManagement)
-	if err != nil {
-		return nil, errorsmod.Wrap(types.ErrTokenManagementSet, err.Error())
+		return nil, err
 	}
 
 	sdkCtx.EventManager().EmitEvent(
@@ -115,29 +98,9 @@ func (ms msgServer) AssignRoles(ctx context.Context, msg *types.MsgAssignRoles) 
 func (ms msgServer) UnassignRoles(ctx context.Context, msg *types.MsgUnassignRoles) (*types.MsgUnassignRolesResponse, error) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
-	token, err := ms.Token.Get(ctx, msg.TokenId)
+	err := ms.Keeper.RevokeRole(ctx, msg.TokenId, msg.Issuer, msg.Managers)
 	if err != nil {
-		return nil, errorsmod.Wrapf(types.ErrTokenGet, err.Error())
-	}
-
-	if !bytes.Equal(msg.Issuer, token.Issuer) {
-		return nil, errorsmod.Wrapf(types.ErrUnauthorize, "issuer not the creator of the token")
-	}
-
-	tokenManagement, err := ms.TokenManagement.Get(ctx, msg.TokenId)
-	if err != nil {
-		return nil, errorsmod.Wrapf(types.ErrTokenManagementGet, err.Error())
-	}
-	managers := tokenManagement.Managers
-	for i, b := range managers {
-		if bytes.Equal(b, msg.Managers) {
-			tokenManagement.Managers = append(managers[:i], managers[i+1:]...)
-		}
-	}
-
-	err = ms.TokenManagement.Set(ctx, msg.TokenId, tokenManagement)
-	if err != nil {
-		return nil, errorsmod.Wrap(types.ErrTokenManagementSet, err.Error())
+		return nil, err
 	}
 
 	sdkCtx.EventManager().EmitEvent(

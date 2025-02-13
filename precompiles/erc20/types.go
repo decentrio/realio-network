@@ -222,7 +222,7 @@ func ParseFreezeArgs(args []interface{}) (
 }
 
 func ParseGrantRoleArgs(args []interface{}) (
-	from common.Address, role int32, err error,
+	to common.Address, role int32, err error,
 ) {
 	if len(args) != 2 {
 		return common.Address{}, 0, fmt.Errorf("invalid number of arguments; expected 2; got: %d", len(args))
@@ -233,7 +233,7 @@ func ParseGrantRoleArgs(args []interface{}) (
 		return common.Address{}, 0, fmt.Errorf("invalid to address: %v", args[0])
 	}
 
-	to, ok := args[0].(common.Address)
+	to, ok = args[0].(common.Address)
 	if !ok {
 		return common.Address{}, 0, fmt.Errorf("invalid to address: %v", args[0])
 	}
@@ -241,4 +241,23 @@ func ParseGrantRoleArgs(args []interface{}) (
 	return to, role, nil
 }
 
+func ParseRevokeRoleArgs(args []interface{}) (
+	to common.Address, role int32, err error,
+) {
+	if len(args) != 2 {
+		return common.Address{}, 0, fmt.Errorf("invalid number of arguments; expected 2; got: %d", len(args))
+	}
+
+	role, ok := args[0].(int32)
+	if !ok {
+		return common.Address{}, 0, fmt.Errorf("invalid to address: %v", args[0])
+	}
+
+	to, ok = args[0].(common.Address)
+	if !ok {
+		return common.Address{}, 0, fmt.Errorf("invalid to address: %v", args[0])
+	}
+
+	return to, role, nil
+}
 

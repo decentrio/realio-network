@@ -19,7 +19,7 @@ func NewMsgCreateToken(issuer []byte, name string, symbol string, description st
 	}
 }
 
-func NewMsgAssignRoles(issuer []byte, tokenId string, managers [][]byte) *MsgAssignRoles {
+func NewMsgAssignRoles(issuer []byte, tokenId string, managers []byte) *MsgAssignRoles {
 	return &MsgAssignRoles{
 		Issuer:   issuer,
 		TokenId:  tokenId,

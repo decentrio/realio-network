@@ -47,7 +47,7 @@ message MsgAssignRoles {
   bytes issuer = 1;
 
   string token_id = 2;
-  repeated bytes managers = 3;
+  bytes managers = 3;
 }
 
 message MsgAssignRolesResponse {}
