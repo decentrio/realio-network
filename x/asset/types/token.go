@@ -1,53 +1,54 @@
 package types
 
-import sdk "github.com/cosmos/cosmos-sdk/types"
+import (
+	fmt "fmt"
+	"strings"
 
-func NewToken(name string, symbol string, total string, manager string, authorizationRequired bool) Token {
+	"cosmossdk.io/math"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+)
+
+// NewToken creates a new Token instance
+func NewToken(id, name string, decimal uint32, description string, symbol string, issuer []byte, evmAddress string) Token {
 	return Token{
-		Name:                  name,
-		Symbol:                symbol,
-		Total:                 total,
-		Manager:               manager,
-		AuthorizationRequired: authorizationRequired,
-		Authorized:            []*TokenAuthorization{},
+		TokenId:     id,
+		Name:        name,
+		Decimal:     decimal,
+		Description: description,
+		Symbol:      symbol,
+		Issuer:      issuer,
+		EvmAddress:  evmAddress,
 	}
 }
 
-func NewAuthorization(address sdk.Address) *TokenAuthorization {
-	return &TokenAuthorization{Address: address.String(), Authorized: true}
+func NewTokenManagement(managers [][]byte, allowNewExtension bool, extensionList []string, maxSupply math.Int) TokenManagement {
+	return TokenManagement{
+		Managers:           managers,
+		AllowNewExtensions: allowNewExtension,
+		ExtensionsList:     extensionList,
+		MaxSupply: maxSupply,
+	}
 }
 
-func (t *Token) AuthorizeAddress(addr sdk.Address) *Token {
-	found := false
-	for _, a := range t.Authorized {
-		if a.Address == addr.String() {
-			a.Authorized = true
-			found = true
-			break
-		}
+func ValidateTokenId(tokenId string) error {
+	tokenParts := strings.Split(tokenId, "/")
+	if len(tokenParts) < 3 {
+		return fmt.Errorf("invalid token id format, should be asset/IssuerAddress/lowercaseTokenName")
 	}
-	if !found {
-		newAuthorized := NewAuthorization(addr)
-		t.Authorized = append(t.Authorized, newAuthorized)
-	}
-	return t
-}
 
-func (t *Token) UnAuthorizeAddress(addr sdk.Address) *Token {
-	for _, a := range t.Authorized {
-		if a.Address == addr.String() {
-			a.Authorized = false
-			break
-		}
+	if tokenParts[0] != ModuleName {
+		return fmt.Errorf("invalid token id format, should be asset/IssuerAddress/lowercaseTokenName")
 	}
-	return t
-}
 
-func (t *Token) AddressIsAuthorized(addr sdk.AccAddress) bool {
-	for _, a := range t.Authorized {
-		if a.Address == addr.String() && a.Authorized {
-			return true
-		}
+	_, err := sdk.AccAddressFromBech32(tokenParts[1])
+	if err != nil {
+		return fmt.Errorf("invalid issuer address")
 	}
-	return false
+
+	tokenName := strings.Join(tokenParts[2:], "/")
+	if strings.ToLower(tokenName) != tokenName {
+		return fmt.Errorf("token name should be in lower case")
+	}
+
+	return nil
 }

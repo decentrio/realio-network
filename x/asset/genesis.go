@@ -2,6 +2,7 @@ package asset
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/realiotech/realio-network/x/asset/keeper"
 	"github.com/realiotech/realio-network/x/asset/types"
@@ -10,16 +11,19 @@ import (
 // InitGenesis initializes the assets module's state from a provided genesis
 // state.
 func InitGenesis(ctx context.Context, k keeper.Keeper, genState types.GenesisState) {
+	fmt.Println("Go here")
 	err := k.Params.Set(ctx, genState.Params)
 	if err != nil {
 		panic(err)
 	}
 	for _, token := range genState.Tokens {
-		err := k.Token.Set(ctx, types.TokenKey(token.Symbol), token)
+		err := k.Token.Set(ctx, token.Symbol, token)
 		if err != nil {
 			panic(err)
 		}
 	}
+	ma := k.Ak.GetModuleAccount(ctx, types.ModuleName)
+	fmt.Println("asset module account", ma)
 }
 
 // ExportGenesis returns the capability module's exported genesis.

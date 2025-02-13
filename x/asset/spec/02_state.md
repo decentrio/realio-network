@@ -8,50 +8,45 @@ order: 2
 
 The `x/asset` module keeps the following objects in state:
 
-| State Object         | Description                    | Key                      | Value           | Store |
-|----------------------|--------------------------------|--------------------------| --------------- |-------|
-| `Token`              | Token bytecode                 | `[]byte{1} + []byte(id)` | `[]byte{token}` | KV    |
-| `TokenAuthorization` | Token Authorization bytecode   | `[]byte{2} + []byte(id)` | `[]byte(id)`    | KV    |
+| State Object         | Description                            | Key                                                       | Value                                 | Store |
+|----------------------|----------------------------------------|-----------------------------------------------------------|---------------------------------------|-------|
+| `Params`             | Params of asset module                 | `[]byte{1}`                                               | `[]byte(params)`                      | KV    |
+| `Token`              | Token information                      | `[]byte{2} + []byte(token_id)`                            | `[]byte{token}`                       | KV    |
+| `TokenExtensions`    | Token extensions info of a denom        | `[]byte{3} + []byte(token_id)`                            | `[]byte{token_manager}`               | KV    |
+| `WhitelistAddresses` | Whitelist Addresses                    | `[]byte{4} + []byte(address)`                             | `[]byte{bool}`                        | KV    |
+| `FreezeAddresses` | Whitelist Addresses                    | `[]byte{5} + []byte(address)`                             | `[]byte{bool}`                        | KV    |
+| `MaxSupply` | Maximum supply of token	| `[]byte{6} + []byte(token_id)`                            | `[]byte{int64}`                       | KV    |
 
-### Token 
+### Token
 
 Allows creation of tokens with optional user authorization.  
 
 ```go
 type Token struct {
-    Name                  string                         `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-    Symbol                string                         `protobuf:"bytes,2,opt,name=symbol,proto3" json:"symbol,omitempty"`
-    Total                 int64                          `protobuf:"varint,3,opt,name=total,proto3" json:"total,omitempty"`
-    Decimals              int64                          `protobuf:"varint,4,opt,name=decimals,proto3" json:"decimals,omitempty"`
-    AuthorizationRequired bool                           `protobuf:"varint,5,opt,name=authorizationRequired,proto3" json:"authorizationRequired,omitempty"`
-    Creator               string                         `protobuf:"bytes,6,opt,name=creator,proto3" json:"creator,omitempty"`
-    Authorized            map[string]*TokenAuthorization `protobuf:"bytes,7,rep,name=authorized,proto3" json:"authorized,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-    Created               int64                          `protobuf:"varint,8,opt,name=created,proto3" json:"created,omitempty"`
+	TokenId     string `protobuf:"bytes,1,opt,name=token_id,json=tokenId,proto3" json:"token_id,omitempty"`
+	Issuer      string `protobuf:"bytes,2,opt,name=issuer,proto3" json:"issuer,omitempty"`
+	Name        string `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	Symbol      string `protobuf:"bytes,4,opt,name=symbol,proto3" json:"symbol,omitempty"`
+	Decimal     uint32 `protobuf:"varint,5,opt,name=decimal,proto3" json:"decimal,omitempty"`
+	Description string `protobuf:"bytes,6,opt,name=description,proto3" json:"description,omitempty"`
+	EvmAddress  string `protobuf:"bytes,9,opt,name=evm_address,json=evmAddress,proto3" json:"evm_address,omitempty"`
 }
 ```
 
-### Token Authorization
+When create the token, `asset` module auto generate for it a evm address. This address is used as a dynamic precompiles.
 
-A Token authorization struct represents a single addresses current authorization state for a token
+### TokenExtensions
 
 ```go
-type TokenAuthorization struct {
-    TokenSymbol string `protobuf:"bytes,1,opt,name=tokenSymbol,proto3" json:"tokenSymbol,omitempty"`
-    Address     string `protobuf:"bytes,2,opt,name=address,proto3" json:"address,omitempty"`
-    Authorized  bool   `protobuf:"varint,3,opt,name=authorized,proto3" json:"authorized,omitempty"`
+type TokenExtensions struct {
+	Managers           []string              `protobuf:"bytes,1,rep,name=managers,proto3" json:"managers,omitempty"`
+	ExtensionsList     []string              `protobuf:"bytes,3,rep,name=extensions_list,json=extensionsList,proto3" json:"extensions_list,omitempty"`
 }
 ```
 
+`extensions_list` is the list of actions that the manager can execute.
 
+### WhitelistAddresses
 
-## Genesis State
+`WhitelistAddresses` is a list of the address that's allow to create new asset.
 
-The `x/asset` module's `GenesisState` defines the state necessary for initializing the chain from a previous exported height. It contains the module parameters and the registered token pairs :
-
-```go
-// GenesisState defines the module's genesis state.
-type GenesisState struct {
-    Params Params `protobuf:"bytes,1,opt,name=params,proto3" json:"params"`
-    PortId string `protobuf:"bytes,2,opt,name=port_id,json=portId,proto3" json:"port_id,omitempty"`
-}
-```
