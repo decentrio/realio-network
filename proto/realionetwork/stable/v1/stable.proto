@@ -68,6 +68,9 @@ message TrackedPackage {
 
   // total_members is the total number of committee members for the package.
   uint32 total_members = 3;
+
+  // signatures are member signatures collected for the package.
+  repeated bytes signatures = 4;
 }
 
 // PackageStatus represents the lifecycle state of a stable-ramp package.

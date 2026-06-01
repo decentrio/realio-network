@@ -192,6 +192,7 @@ func (ms msgServer) WithdrawClaim(goCtx context.Context, msg *types.MsgWithdrawC
 		if trackedPackage.Approvals < trackedPackage.TotalMembers {
 			trackedPackage.Approvals++
 		}
+		trackedPackage.Signatures = append(trackedPackage.Signatures, append([]byte(nil), msg.Signature...))
 	case types.ClaimAction_CLAIM_ACTION_REJECT:
 		trackedPackage.PackageData.Status = types.PackageStatus_PACKAGE_STATUS_FAILED
 	default:
