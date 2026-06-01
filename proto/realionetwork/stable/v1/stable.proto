@@ -1,0 +1,98 @@
+syntax = "proto3";
+package realionetwork.stable.v1;
+
+option go_package = "github.com/realiotech/realio-network/x/stable-ramp/types";
+
+// Committee represents a set of members authorized for stable-ramp operations.
+message Committee {
+  // members is the list of committee members.
+  repeated Member members = 1;
+
+  // threshold is the required signature ratio.
+  Threshold threshold = 2;
+}
+
+// Threshold represents a signature threshold as a numerator over a denominator.
+message Threshold {
+  // numerator is the required portion of the threshold ratio.
+  uint32 numerator = 1;
+
+  // denominator is the total portion of the threshold ratio.
+  uint32 denominator = 2;
+}
+
+// Member represents a committee member's Realio and external-chain public keys.
+message Member {
+  // realio_pubkey is the member's native Realio hex-encoded public key.
+  string realio_pubkey = 1;
+
+  // external_pubkey is the member's hex-encoded public key for another chain's
+  // signature scheme.
+  string external_pubkey = 2;
+}
+
+// Package represents a stable-ramp transfer package.
+message Package {
+  // sender_addr is the sender address.
+  string sender_addr = 1;
+
+  // receiver_addr is the receiver address.
+  string receiver_addr = 2;
+
+  // connection_id is the connection identifier.
+  string connection_id = 3;
+
+  // amount is the transfer amount.
+  uint64 amount = 4;
+
+  // denom is the transfer denomination.
+  string denom = 5;
+
+  // nonce is the package nonce.
+  uint64 nonce = 6;
+
+  // status is the package status.
+  PackageStatus status = 7;
+
+  // action is the package action.
+  PackageAction action = 8;
+}
+
+// TrackedPackage wraps a package with committee approval tracking.
+message TrackedPackage {
+  // package_data is the package being tracked.
+  Package package_data = 1;
+
+  // approvals is the number of committee member approvals for the package.
+  uint32 approvals = 2;
+
+  // total_members is the total number of committee members for the package.
+  uint32 total_members = 3;
+}
+
+// PackageStatus represents the lifecycle state of a stable-ramp package.
+enum PackageStatus {
+  // PACKAGE_STATUS_UNSPECIFIED defines an unknown package status.
+  PACKAGE_STATUS_UNSPECIFIED = 0;
+
+  // PACKAGE_STATUS_PENDING defines a package that is pending processing.
+  PACKAGE_STATUS_PENDING = 1;
+
+  // PACKAGE_STATUS_COMPLETED defines a package that has completed processing.
+  PACKAGE_STATUS_COMPLETED = 2;
+
+  // PACKAGE_STATUS_FAILED defines a package that failed processing.
+  PACKAGE_STATUS_FAILED = 3;
+}
+
+// PackageAction represents whether a package is for deposit or withdrawal.
+enum PackageAction {
+  // PACKAGE_ACTION_UNSPECIFIED defines an unknown package action.
+  PACKAGE_ACTION_UNSPECIFIED = 0;
+
+  // PACKAGE_ACTION_DEPOSIT defines a deposit package action.
+  PACKAGE_ACTION_DEPOSIT = 1;
+
+  // PACKAGE_ACTION_WITHDRAW defines a withdrawal package action.
+  PACKAGE_ACTION_WITHDRAW = 2;
+}

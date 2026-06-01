@@ -1,0 +1,95 @@
+syntax = "proto3";
+package realionetwork.stable.v1;
+
+import "cosmos/msg/v1/msg.proto";
+
+option go_package = "github.com/realiotech/realio-network/x/stable-ramp/types";
+
+// Msg defines the Msg service.
+service Msg {
+  option (cosmos.msg.v1.service) = true;
+
+  // Withdraw defines a method for withdrawing stable-ramp funds.
+  rpc Withdraw(MsgWithdraw) returns (MsgWithdrawResponse);
+
+  // DepositClaim defines a method for claiming a deposit package.
+  rpc DepositClaim(MsgDepositClaim) returns (MsgDepositClaimResponse);
+
+  // WithdrawClaim defines a method for claiming a withdrawal package.
+  rpc WithdrawClaim(MsgWithdrawClaim) returns (MsgWithdrawClaimResponse);
+}
+
+// MsgWithdraw defines a request to withdraw stable-ramp funds.
+message MsgWithdraw {
+  option (cosmos.msg.v1.signer) = "sender_addr";
+
+  // sender_addr is the signer address initiating the withdraw.
+  string sender_addr = 1;
+
+  // receiver_addr is the destination address.
+  string receiver_addr = 2;
+
+  // amount is the withdrawal amount.
+  uint64 amount = 3;
+
+  // connection_id is the connection identifier.
+  string connection_id = 4;
+}
+
+// MsgWithdrawResponse defines the response for a withdraw request.
+message MsgWithdrawResponse {}
+
+// MsgDepositClaim defines a request to approve or reject a deposit package.
+message MsgDepositClaim {
+  option (cosmos.msg.v1.signer) = "member_addr";
+
+  // member_addr is the committee member signer address.
+  string member_addr = 1;
+
+  // package_nonce is the nonce of the package being claimed.
+  uint64 package_nonce = 2;
+
+  // action is the member's claim action.
+  ClaimAction action = 3;
+
+  // connection_id is the connection identifier.
+  string connection_id = 4;
+}
+
+// MsgDepositClaimResponse defines the response for a deposit claim request.
+message MsgDepositClaimResponse {}
+
+// MsgWithdrawClaim defines a request to approve or reject a withdrawal package.
+message MsgWithdrawClaim {
+  option (cosmos.msg.v1.signer) = "member_addr";
+
+  // member_addr is the committee member signer address.
+  string member_addr = 1;
+
+  // package_nonce is the nonce of the package being claimed.
+  uint64 package_nonce = 2;
+
+  // action is the member's claim action.
+  ClaimAction action = 3;
+
+  // signature is the member signature for the withdrawal package.
+  bytes signature = 4;
+
+  // connection_id is the connection identifier.
+  string connection_id = 5;
+}
+
+// MsgWithdrawClaimResponse defines the response for a withdrawal claim request.
+message MsgWithdrawClaimResponse {}
+
+// ClaimAction represents a committee member's package claim action.
+enum ClaimAction {
+  // CLAIM_ACTION_UNSPECIFIED defines an unknown claim action.
+  CLAIM_ACTION_UNSPECIFIED = 0;
+
+  // CLAIM_ACTION_APPROVE defines an approval claim action.
+  CLAIM_ACTION_APPROVE = 1;
+
+  // CLAIM_ACTION_REJECT defines a rejection claim action.
+  CLAIM_ACTION_REJECT = 2;
+}

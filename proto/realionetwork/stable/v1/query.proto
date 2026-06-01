@@ -1,0 +1,56 @@
+syntax = "proto3";
+package realionetwork.stable.v1;
+
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "realionetwork/stable/v1/stable.proto";
+
+option go_package = "github.com/realiotech/realio-network/x/stable-ramp/types";
+
+// Query defines the gRPC querier service.
+service Query {
+  // Package queries a pending package by nonce and connection ID.
+  rpc Package(QueryPackageRequest) returns (QueryPackageResponse) {
+    option (google.api.http).get =
+        "/realionetwork/stable/v1/packages/{connection_id}/{nonce}";
+  }
+
+  // PendingPackages queries all current pending packages.
+  rpc PendingPackages(QueryPendingPackagesRequest)
+      returns (QueryPendingPackagesResponse) {
+    option (google.api.http).get = "/realionetwork/stable/v1/packages";
+  }
+}
+
+// QueryPackageRequest is request type for the Query/Package RPC method.
+message QueryPackageRequest {
+  // connection_id is the connection identifier.
+  string connection_id = 1;
+
+  // nonce is the package nonce.
+  uint64 nonce = 2;
+}
+
+// QueryPackageResponse is response type for the Query/Package RPC method.
+message QueryPackageResponse {
+  // package is the tracked package.
+  TrackedPackage package = 1 [ (gogoproto.nullable) = false ];
+}
+
+// QueryPendingPackagesRequest is request type for the Query/PendingPackages RPC
+// method.
+message QueryPendingPackagesRequest {
+  // pagination defines an optional pagination for the request.
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+// QueryPendingPackagesResponse is response type for the Query/PendingPackages
+// RPC method.
+message QueryPendingPackagesResponse {
+  // packages are the current pending packages.
+  repeated TrackedPackage packages = 1 [ (gogoproto.nullable) = false ];
+
+  // pagination defines the pagination in the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
