@@ -12,9 +12,10 @@ import (
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	erc20types "github.com/cosmos/evm/x/erc20/types"
+	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/realiotech/realio-network/crypto/ossecp256k1"
-	realionetworktypes "github.com/realiotech/realio-network/types"
 	"github.com/realiotech/realio-network/x/stable-ramp/types"
 )
 
@@ -40,18 +41,25 @@ func (ms msgServer) Withdraw(goCtx context.Context, msg *types.MsgWithdraw) (*ty
 		return nil, errorsmod.Wrap(sdkerrors.ErrInvalidAddress, err.Error())
 	}
 
-	amount := math.NewIntFromUint64(msg.Amount)
-	coin := sdk.NewCoin(realionetworktypes.BaseDenom, amount)
-	balance := ms.bankKeeper.GetBalance(goCtx, sender, coin.Denom)
-	if balance.Amount.LT(coin.Amount) {
-		return nil, errorsmod.Wrapf(
-			sdkerrors.ErrInsufficientFunds,
-			"sender %s has %s, required %s",
-			msg.SenderAddr,
-			balance.String(),
-			coin.String(),
-		)
+	if !common.IsHexAddress(msg.ReceiverAddr) {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "receiver_addr %s is not a valid Ethereum address", msg.ReceiverAddr)
 	}
+
+	if !common.IsHexAddress(msg.TokenAddress) {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "token_address %s is not a valid Ethereum address", msg.TokenAddress)
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	tokenAddr := common.HexToAddress(msg.TokenAddress)
+
+	// Check erc20 token has presentation
+	denom, err := ms.erc20Keeper.GetTokenDenom(ctx, tokenAddr)
+	if err != nil {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "token_address %s is not a registered ERC20 token: %s", msg.TokenAddress, err)
+	}
+
+	amount := math.NewIntFromUint64(msg.Amount)
+	coin := sdk.NewCoin(denom, amount)
 
 	committee, err := ms.Committees.Get(goCtx, msg.ConnectionId)
 	if err != nil {
@@ -83,7 +91,22 @@ func (ms msgServer) Withdraw(goCtx context.Context, msg *types.MsgWithdraw) (*ty
 		return nil, err
 	}
 
-	ctx := sdk.UnwrapSDKContext(goCtx)
+	// Convert ERC20 token into cosmos coin representation, minted to sender's account.
+	_, err = ms.erc20Keeper.ConvertERC20(goCtx, &erc20types.MsgConvertERC20{
+		Sender:          common.BytesToAddress(sender).Hex(),
+		ContractAddress: msg.TokenAddress,
+		Amount:          amount,
+		Receiver:        msg.SenderAddr,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Lock into module account for burning later
+	if err := ms.bankKeeper.SendCoinsFromAccountToModule(goCtx, sender, types.ModuleName, sdk.Coins{coin}); err != nil {
+		return nil, errorsmod.Wrap(sdkerrors.ErrInsufficientFunds, err.Error())
+	}
+
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeWithdraw,
@@ -125,6 +148,9 @@ func (ms msgServer) DepositClaim(goCtx context.Context, msg *types.MsgDepositCla
 			trackedPackage.PackageData.ConnectionId,
 		)
 	}
+	if trackedPackage.PackageData.Action != types.PackageAction_PACKAGE_ACTION_DEPOSIT {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "package %d is not a deposit package", msg.PackageNonce)
+	}
 
 	committee, err := ms.Committees.Get(goCtx, msg.ConnectionId)
 	if err != nil {
@@ -132,6 +158,10 @@ func (ms msgServer) DepositClaim(goCtx context.Context, msg *types.MsgDepositCla
 	}
 	if !committeeContainsMemberAddress(committee, memberAddr) {
 		return nil, errorsmod.Wrapf(sdkerrors.ErrUnauthorized, "member %s is not in the committee", msg.MemberAddr)
+	}
+
+	if hasVoted(trackedPackage.VotedMembers, msg.MemberAddr) {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrUnauthorized, "member %s has already voted on package %d", msg.MemberAddr, msg.PackageNonce)
 	}
 
 	switch msg.Action {
@@ -144,6 +174,8 @@ func (ms msgServer) DepositClaim(goCtx context.Context, msg *types.MsgDepositCla
 	default:
 		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid claim action: %s", msg.Action.String())
 	}
+
+	trackedPackage.VotedMembers = append(trackedPackage.VotedMembers, msg.MemberAddr)
 
 	if err := ms.PendingPackages.Set(goCtx, pendingPackageKey, trackedPackage); err != nil {
 		return nil, err
@@ -178,6 +210,9 @@ func (ms msgServer) WithdrawClaim(goCtx context.Context, msg *types.MsgWithdrawC
 			trackedPackage.PackageData.ConnectionId,
 		)
 	}
+	if trackedPackage.PackageData.Action != types.PackageAction_PACKAGE_ACTION_WITHDRAW {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "package %d is not a withdraw package", msg.PackageNonce)
+	}
 
 	committee, err := ms.Committees.Get(goCtx, msg.ConnectionId)
 	if err != nil {
@@ -187,14 +222,27 @@ func (ms msgServer) WithdrawClaim(goCtx context.Context, msg *types.MsgWithdrawC
 		return nil, errorsmod.Wrapf(sdkerrors.ErrUnauthorized, "member %s is not in the committee", msg.MemberAddr)
 	}
 
+	if hasVoted(trackedPackage.VotedMembers, msg.MemberAddr) {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrUnauthorized, "member %s has already voted on package %d", msg.MemberAddr, msg.PackageNonce)
+	}
+
 	switch msg.Action {
 	case types.ClaimAction_CLAIM_ACTION_APPROVE:
 		if trackedPackage.Approvals < trackedPackage.TotalMembers {
 			trackedPackage.Approvals++
 		}
 		trackedPackage.Signatures = append(trackedPackage.Signatures, append([]byte(nil), msg.Signature...))
+		trackedPackage.VotedMembers = append(trackedPackage.VotedMembers, msg.MemberAddr)
 	case types.ClaimAction_CLAIM_ACTION_REJECT:
-		trackedPackage.PackageData.Status = types.PackageStatus_PACKAGE_STATUS_FAILED
+		senderAddr, err := sdk.AccAddressFromBech32(trackedPackage.PackageData.SenderAddr)
+		if err != nil {
+			return nil, errorsmod.Wrap(sdkerrors.ErrInvalidAddress, err.Error())
+		}
+		refundCoin := sdk.NewCoin(trackedPackage.PackageData.Denom, math.NewIntFromUint64(trackedPackage.PackageData.Amount))
+		if err := ms.RefundEscrowedCoins(goCtx, senderAddr, sdk.Coins{refundCoin}); err != nil {
+			return nil, err
+		}
+		return &types.MsgWithdrawClaimResponse{}, ms.PendingPackages.Remove(goCtx, pendingPackageKey)
 	default:
 		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid claim action: %s", msg.Action.String())
 	}
@@ -204,6 +252,15 @@ func (ms msgServer) WithdrawClaim(goCtx context.Context, msg *types.MsgWithdrawC
 	}
 
 	return &types.MsgWithdrawClaimResponse{}, nil
+}
+
+func hasVoted(votedMembers []string, memberAddr string) bool {
+	for _, v := range votedMembers {
+		if v == memberAddr {
+			return true
+		}
+	}
+	return false
 }
 
 func committeeContainsMemberAddress(committee types.Committee, memberAddr sdk.AccAddress) bool {
