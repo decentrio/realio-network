@@ -26,7 +26,7 @@ message MsgWithdraw {
   // sender_addr is the signer address initiating the withdraw.
   string sender_addr = 1;
 
-  // receiver_addr is the destination address.
+  // receiver_addr is the destination Ethereum address.
   string receiver_addr = 2;
 
   // amount is the withdrawal amount.
@@ -34,6 +34,9 @@ message MsgWithdraw {
 
   // connection_id is the connection identifier.
   string connection_id = 4;
+
+  // token_address is the ERC20 contract address of the token being withdrawn.
+  string token_address = 5;
 }
 
 // MsgWithdrawResponse defines the response for a withdraw request.
