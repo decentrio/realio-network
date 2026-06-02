@@ -9,6 +9,10 @@ import (
 	"cosmossdk.io/core/store"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	erc20keeper "github.com/cosmos/evm/x/erc20/keeper"
+	erc20types "github.com/cosmos/evm/x/erc20/types"
+	evmkeeper "github.com/cosmos/evm/x/vm/keeper"
+	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/realiotech/realio-network/x/stable-ramp/types"
 )
@@ -18,6 +22,8 @@ type Keeper struct {
 	cdc          codec.BinaryCodec
 	storeService store.KVStoreService
 	bankKeeper   types.BankKeeper
+	erc20Keeper  erc20keeper.Keeper
+	evmKeeper    *evmkeeper.Keeper
 
 	// the address capable of executing a MsgUpdateParams and MsgUpdateCommittee message. Typically, this
 	// should be the x/gov module account.
@@ -46,6 +52,8 @@ func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeService store.KVStoreService,
 	bankKeeper types.BankKeeper,
+	erc20Keeper erc20keeper.Keeper,
+	evmKeeper *evmkeeper.Keeper,
 	authority string,
 ) Keeper {
 	sb := collections.NewSchemaBuilder(storeService)
@@ -53,6 +61,8 @@ func NewKeeper(
 		cdc:          cdc,
 		storeService: storeService,
 		bankKeeper:   bankKeeper,
+		erc20Keeper:  erc20Keeper,
+		evmKeeper:    evmKeeper,
 		authority:    authority,
 		Committees: collections.NewMap(
 			sb,
@@ -105,4 +115,54 @@ func (k Keeper) GetAuthority() string {
 func (k Keeper) Logger(ctx context.Context) log.Logger {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	return sdkCtx.Logger().With("module", "x/"+types.ModuleName)
+}
+
+// BurnEscrowedCoins burns coins held in the module escrow account.
+func (k Keeper) BurnEscrowedCoins(ctx context.Context, coins sdk.Coins) error {
+	return k.bankKeeper.BurnCoins(ctx, types.ModuleName, coins)
+}
+
+// FulfillDeposit mints cosmos coins to the receiver then converts them to ERC20 tokens.
+func (k Keeper) FulfillDeposit(ctx context.Context, receiver sdk.AccAddress, coins sdk.Coins) error {
+	if err := k.bankKeeper.MintCoins(ctx, types.ModuleName, coins); err != nil {
+		return err
+	}
+
+	if err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, receiver, coins); err != nil {
+		return err
+	}
+
+	ethReceiver := common.BytesToAddress(receiver)
+	for _, coin := range coins {
+		if _, err := k.erc20Keeper.ConvertCoin(ctx, &erc20types.MsgConvertCoin{
+			Coin:     coin,
+			Receiver: ethReceiver.Hex(),
+			Sender:   receiver.String(),
+		}); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// RefundEscrowedCoins releases escrowed cosmos coins back to the sender and
+// converts them to ERC20 tokens so the user ends up where they started.
+func (k Keeper) RefundEscrowedCoins(ctx context.Context, recipient sdk.AccAddress, coins sdk.Coins) error {
+	if err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, recipient, coins); err != nil {
+		return err
+	}
+
+	ethReceiver := common.BytesToAddress(recipient)
+	for _, coin := range coins {
+		if _, err := k.erc20Keeper.ConvertCoin(ctx, &erc20types.MsgConvertCoin{
+			Coin:     coin,
+			Receiver: ethReceiver.Hex(),
+			Sender:   recipient.String(),
+		}); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
