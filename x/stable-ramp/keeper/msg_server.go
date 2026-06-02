@@ -13,7 +13,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/realiotech/realio-network/crypto/ossecp256k1"
+	"github.com/realiotech/realio-network/crypto/ethsecp256k1"
 	realionetworktypes "github.com/realiotech/realio-network/types"
 	"github.com/realiotech/realio-network/x/stable-ramp/types"
 )
@@ -225,6 +225,6 @@ func memberAddressMatches(member *types.Member, memberAddr sdk.AccAddress) bool 
 		return false
 	}
 
-	pubkey := ossecp256k1.PubKey{Key: pubkeyBytes}
+	pubkey := ethsecp256k1.PubKey{Key: pubkeyBytes}
 	return bytes.Equal(sdk.AccAddress(pubkey.Address()), memberAddr)
 }
