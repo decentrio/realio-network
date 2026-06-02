@@ -15,7 +15,7 @@ import (
 	erc20types "github.com/cosmos/evm/x/erc20/types"
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/realiotech/realio-network/crypto/ossecp256k1"
+	"github.com/realiotech/realio-network/crypto/ethsecp256k1"
 	"github.com/realiotech/realio-network/x/stable-ramp/types"
 )
 
@@ -121,7 +121,6 @@ func (ms msgServer) Withdraw(goCtx context.Context, msg *types.MsgWithdraw) (*ty
 
 	return &types.MsgWithdrawResponse{}, nil
 }
-
 
 // TODO: Handle first claim, packages creation & sequence
 func (ms msgServer) DepositClaim(goCtx context.Context, msg *types.MsgDepositClaim) (*types.MsgDepositClaimResponse, error) {
@@ -284,6 +283,6 @@ func memberAddressMatches(member *types.Member, memberAddr sdk.AccAddress) bool 
 		return false
 	}
 
-	pubkey := ossecp256k1.PubKey{Key: pubkeyBytes}
+	pubkey := ethsecp256k1.PubKey{Key: pubkeyBytes}
 	return bytes.Equal(sdk.AccAddress(pubkey.Address()), memberAddr)
 }
