@@ -122,6 +122,8 @@ func (ms msgServer) Withdraw(goCtx context.Context, msg *types.MsgWithdraw) (*ty
 	return &types.MsgWithdrawResponse{}, nil
 }
 
+
+// TODO: Handle first claim, packages creation & sequence
 func (ms msgServer) DepositClaim(goCtx context.Context, msg *types.MsgDepositClaim) (*types.MsgDepositClaimResponse, error) {
 	memberAddr, err := sdk.AccAddressFromBech32(msg.MemberAddr)
 	if err != nil {
