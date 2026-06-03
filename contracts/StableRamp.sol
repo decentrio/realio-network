@@ -56,9 +56,10 @@ contract StableRamp is Initializable, Pausable, ReentrancyGuard, Ownable {
     // Used by the Cosmos module as the deposit event_nonce.
     uint256 public state_lastEventNonce;
 
-    // Withdrawal replay protection: Cosmos package nonce → executed.
-    // Once set to true, that withdrawal can never be re-executed.
-    mapping(uint256 => bool) public state_executedWithdrawals;
+    // Last executed withdrawal nonce (Cosmos withdraw package nonce).
+    // submitWithdrawal only accepts nonce == state_lastWithdrawNonce + 1,
+    // enforcing strict sequential processing and preventing replay.
+    uint256 public state_lastWithdrawNonce;
 
     // ─────────────────────────────────────────────────────────────────────────
     // Events
@@ -186,8 +187,10 @@ contract StableRamp is Initializable, Pausable, ReentrancyGuard, Ownable {
         require(block.number < _timeout,
             "Withdrawal submission has timed out");
 
-        require(!state_executedWithdrawals[_withdrawalNonce],
-            "Withdrawal already executed");
+        require(
+            _withdrawalNonce == state_lastWithdrawNonce + 1,
+            "Withdrawal nonce must be exactly one greater than the last processed nonce"
+        );
 
         require(
             _currentCommittee.members.length == _currentCommittee.powers.length &&
@@ -221,7 +224,7 @@ contract StableRamp is Initializable, Pausable, ReentrancyGuard, Ownable {
 
         // ── Actions ───────────────────────────────────────────────────────────
 
-        state_executedWithdrawals[_withdrawalNonce] = true;
+        state_lastWithdrawNonce = _withdrawalNonce;
         IERC20(_tokenContract).safeTransfer(_recipient, _amount);
 
         // ── Logs ──────────────────────────────────────────────────────────────

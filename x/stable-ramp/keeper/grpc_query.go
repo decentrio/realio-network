@@ -31,12 +31,17 @@ func (q queryServer) Package(
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
-	pkg, err := q.k.PendingPackages.Get(ctx, collections.Join(req.Nonce, req.ConnectionId))
-	if err != nil {
-		return nil, errorsmod.Wrap(sdkerrors.ErrKeyNotFound, "package not found")
+	key := collections.Join(req.Nonce, req.ConnectionId)
+
+	// Try deposit packages first, then withdraw.
+	if pkg, err := q.k.DepositPackages.Get(ctx, key); err == nil {
+		return &types.QueryPackageResponse{Package: pkg}, nil
+	}
+	if pkg, err := q.k.WithdrawPackages.Get(ctx, key); err == nil {
+		return &types.QueryPackageResponse{Package: pkg}, nil
 	}
 
-	return &types.QueryPackageResponse{Package: pkg}, nil
+	return nil, errorsmod.Wrap(sdkerrors.ErrKeyNotFound, "package not found")
 }
 
 func (q queryServer) PendingPackages(
@@ -51,30 +56,29 @@ func (q queryServer) PendingPackages(
 	if pageReq == nil {
 		pageReq = &sdkquery.PageRequest{}
 	}
-
 	limit := pageReq.Limit
 	if limit == 0 {
 		limit = sdkquery.DefaultLimit
 	}
 
-	var (
-		packages []types.TrackedPackage
-		total    uint64
-	)
+	var packages []types.TrackedPackage
+	var total uint64
 
-	err := q.k.PendingPackages.Walk(ctx, nil, func(_ collections.Pair[uint64, string], pkg types.TrackedPackage) (bool, error) {
+	collect := func(_ collections.Pair[uint64, string], pkg types.TrackedPackage) (bool, error) {
 		if pkg.PackageData == nil || pkg.PackageData.Status != types.PackageStatus_PACKAGE_STATUS_PENDING {
 			return false, nil
 		}
-
 		if total >= pageReq.Offset && uint64(len(packages)) < limit {
 			packages = append(packages, pkg)
 		}
-
 		total++
 		return false, nil
-	})
-	if err != nil {
+	}
+
+	if err := q.k.DepositPackages.Walk(ctx, nil, collect); err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	if err := q.k.WithdrawPackages.Walk(ctx, nil, collect); err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 

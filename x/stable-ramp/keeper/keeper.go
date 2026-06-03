@@ -34,8 +34,11 @@ type Keeper struct {
 	// Committees maps a connection ID to committee data.
 	Committees collections.Map[string, types.Committee]
 
-	// PendingPackages maps pending packages by nonce and connection ID.
-	PendingPackages collections.Map[collections.Pair[uint64, string], types.TrackedPackage]
+	// DepositPackages maps deposit packages by (deposit_nonce, connection_id).
+	DepositPackages collections.Map[collections.Pair[uint64, string], types.TrackedPackage]
+
+	// WithdrawPackages maps withdraw packages by (withdraw_nonce, connection_id).
+	WithdrawPackages collections.Map[collections.Pair[uint64, string], types.TrackedPackage]
 
 	// CommitteeUpdates maps a connection ID to a pending new committee.
 	CommitteeUpdates collections.Map[string, types.Committee]
@@ -43,8 +46,11 @@ type Keeper struct {
 	// EscrowAccounts stores escrow account addresses.
 	EscrowAccounts collections.KeySet[sdk.AccAddress]
 
-	// NextPackageNonce tracks the next package nonce.
-	NextPackageNonce collections.Sequence
+	// WithdrawNonces maps connection_id to the last assigned withdraw nonce.
+	WithdrawNonces collections.Map[string, uint64]
+
+	// LastObservedDepositNonce maps connection_id to the last processed deposit nonce.
+	LastObservedDepositNonce collections.Map[string, uint64]
 }
 
 // NewKeeper creates a new stable-ramp Keeper instance.
@@ -71,10 +77,17 @@ func NewKeeper(
 			collections.StringKey,
 			codec.CollValue[types.Committee](cdc),
 		),
-		PendingPackages: collections.NewMap(
+		DepositPackages: collections.NewMap(
 			sb,
-			types.PendingPackagesPrefix,
-			"pending_packages",
+			types.DepositPackagesPrefix,
+			"deposit_packages",
+			collections.PairKeyCodec(collections.Uint64Key, collections.StringKey),
+			codec.CollValue[types.TrackedPackage](cdc),
+		),
+		WithdrawPackages: collections.NewMap(
+			sb,
+			types.WithdrawPackagesPrefix,
+			"withdraw_packages",
 			collections.PairKeyCodec(collections.Uint64Key, collections.StringKey),
 			codec.CollValue[types.TrackedPackage](cdc),
 		),
@@ -91,10 +104,19 @@ func NewKeeper(
 			"escrow_accounts",
 			sdk.AccAddressKey,
 		),
-		NextPackageNonce: collections.NewSequence(
+		WithdrawNonces: collections.NewMap(
 			sb,
-			types.NextPackageNoncePrefix,
-			"next_package_nonce",
+			types.WithdrawNoncesPrefix,
+			"withdraw_nonces",
+			collections.StringKey,
+			collections.Uint64Value,
+		),
+		LastObservedDepositNonce: collections.NewMap(
+			sb,
+			types.LastObservedDepositNoncePrefix,
+			"last_observed_deposit_nonce",
+			collections.StringKey,
+			collections.Uint64Value,
 		),
 	}
 

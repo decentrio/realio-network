@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/hex"
+	"errors"
 	"strconv"
 	"strings"
 
@@ -49,47 +50,32 @@ func (ms msgServer) Withdraw(goCtx context.Context, msg *types.MsgWithdraw) (*ty
 		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "token_address %s is not a valid Ethereum address", msg.TokenAddress)
 	}
 
+	committee, err := ms.Committees.Get(goCtx, msg.ConnectionId)
+	if err != nil {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "committee not found for connection %s", msg.ConnectionId)
+	}
+
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	tokenAddr := common.HexToAddress(msg.TokenAddress)
-
-	// Check erc20 token has presentation
 	denom, err := ms.erc20Keeper.GetTokenDenom(ctx, tokenAddr)
 	if err != nil {
 		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "token_address %s is not a registered ERC20 token: %s", msg.TokenAddress, err)
 	}
 
+	// Assign the next withdraw nonce for this connection.
+	lastNonce, err := ms.WithdrawNonces.Get(goCtx, msg.ConnectionId)
+	if errors.Is(err, collections.ErrNotFound) {
+		lastNonce = 0
+	} else if err != nil {
+		return nil, err
+	}
+	nonce := lastNonce + 1
+	if err := ms.WithdrawNonces.Set(goCtx, msg.ConnectionId, nonce); err != nil {
+		return nil, err
+	}
+
 	amount := math.NewIntFromUint64(msg.Amount)
 	coin := sdk.NewCoin(denom, amount)
-
-	committee, err := ms.Committees.Get(goCtx, msg.ConnectionId)
-	if err != nil {
-		return nil, err
-	}
-
-	nonce, err := ms.NextPackageNonce.Next(goCtx)
-	if err != nil {
-		return nil, err
-	}
-
-	pkg := types.Package{
-		SenderAddr:   msg.SenderAddr,
-		ReceiverAddr: msg.ReceiverAddr,
-		ConnectionId: msg.ConnectionId,
-		Amount:       msg.Amount,
-		Denom:        coin.Denom,
-		Nonce:        nonce,
-		Status:       types.PackageStatus_PACKAGE_STATUS_PENDING,
-		Action:       types.PackageAction_PACKAGE_ACTION_WITHDRAW,
-	}
-
-	trackedPackage := types.TrackedPackage{
-		PackageData:  &pkg,
-		Approvals:    0,
-		TotalMembers: uint32(len(committee.Members)),
-	}
-	if err := ms.PendingPackages.Set(goCtx, collections.Join(nonce, msg.ConnectionId), trackedPackage); err != nil {
-		return nil, err
-	}
 
 	// Convert ERC20 token into cosmos coin representation, minted to sender's account.
 	_, err = ms.erc20Keeper.ConvertERC20(goCtx, &erc20types.MsgConvertERC20{
@@ -102,9 +88,27 @@ func (ms msgServer) Withdraw(goCtx context.Context, msg *types.MsgWithdraw) (*ty
 		return nil, err
 	}
 
-	// Lock into module account for burning later
+	// Lock into module account for burning later.
 	if err := ms.bankKeeper.SendCoinsFromAccountToModule(goCtx, sender, types.ModuleName, sdk.Coins{coin}); err != nil {
 		return nil, errorsmod.Wrap(sdkerrors.ErrInsufficientFunds, err.Error())
+	}
+
+	pkg := types.Package{
+		SenderAddr:   msg.SenderAddr,
+		ReceiverAddr: msg.ReceiverAddr,
+		ConnectionId: msg.ConnectionId,
+		Amount:       msg.Amount,
+		Denom:        coin.Denom,
+		Nonce:        nonce,
+		Status:       types.PackageStatus_PACKAGE_STATUS_PENDING,
+		Action:       types.PackageAction_PACKAGE_ACTION_WITHDRAW,
+	}
+	trackedPackage := types.TrackedPackage{
+		PackageData:  &pkg,
+		TotalMembers: uint32(len(committee.Members)),
+	}
+	if err := ms.WithdrawPackages.Set(goCtx, collections.Join(nonce, msg.ConnectionId), trackedPackage); err != nil {
+		return nil, err
 	}
 
 	ctx.EventManager().EmitEvent(
@@ -122,35 +126,13 @@ func (ms msgServer) Withdraw(goCtx context.Context, msg *types.MsgWithdraw) (*ty
 	return &types.MsgWithdrawResponse{}, nil
 }
 
-// TODO: Handle first claim, packages creation & sequence
+// DepositClaim votes on an existing deposit package.
+// Deposit packages are created by MsgDeposit (to be implemented).
+// The sequential nonce check ensures no deposit is skipped.
 func (ms msgServer) DepositClaim(goCtx context.Context, msg *types.MsgDepositClaim) (*types.MsgDepositClaimResponse, error) {
 	memberAddr, err := sdk.AccAddressFromBech32(msg.MemberAddr)
 	if err != nil {
 		return nil, errorsmod.Wrap(sdkerrors.ErrInvalidAddress, err.Error())
-	}
-
-	pendingPackageKey := collections.Join(msg.PackageNonce, msg.ConnectionId)
-	trackedPackage, err := ms.PendingPackages.Get(goCtx, pendingPackageKey)
-	if err != nil {
-		return nil, err
-	}
-	if trackedPackage.PackageData == nil {
-		return nil, errorsmod.Wrapf(
-			sdkerrors.ErrInvalidRequest, "cannot find package with nounce %v for connection %s",
-			msg.PackageNonce,
-			msg.ConnectionId,
-		)
-	}
-	if trackedPackage.PackageData.ConnectionId != msg.ConnectionId {
-		return nil, errorsmod.Wrapf(
-			sdkerrors.ErrInvalidRequest,
-			"claim connection_id %s does not match package connection_id %s",
-			msg.ConnectionId,
-			trackedPackage.PackageData.ConnectionId,
-		)
-	}
-	if trackedPackage.PackageData.Action != types.PackageAction_PACKAGE_ACTION_DEPOSIT {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "package %d is not a deposit package", msg.PackageNonce)
 	}
 
 	committee, err := ms.Committees.Get(goCtx, msg.ConnectionId)
@@ -161,8 +143,34 @@ func (ms msgServer) DepositClaim(goCtx context.Context, msg *types.MsgDepositCla
 		return nil, errorsmod.Wrapf(sdkerrors.ErrUnauthorized, "member %s is not in the committee", msg.MemberAddr)
 	}
 
+	// Enforce sequential deposit nonce: only process nonce = lastObserved + 1.
+	lastObserved, err := ms.LastObservedDepositNonce.Get(goCtx, msg.ConnectionId)
+	if errors.Is(err, collections.ErrNotFound) {
+		lastObserved = 0
+	} else if err != nil {
+		return nil, err
+	}
+	if msg.PackageNonce != lastObserved+1 {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest,
+			"expected deposit nonce %d for connection %s, got %d",
+			lastObserved+1, msg.ConnectionId, msg.PackageNonce,
+		)
+	}
+
+	packageKey := collections.Join(msg.PackageNonce, msg.ConnectionId)
+	trackedPackage, err := ms.DepositPackages.Get(goCtx, packageKey)
+	if err != nil {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest,
+			"deposit package with nonce %d not found for connection %s",
+			msg.PackageNonce, msg.ConnectionId,
+		)
+	}
+	if trackedPackage.PackageData.Status == types.PackageStatus_PACKAGE_STATUS_FAILED {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "deposit package %d was already rejected", msg.PackageNonce)
+	}
+
 	if hasVoted(trackedPackage.VotedMembers, msg.MemberAddr) {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrUnauthorized, "member %s has already voted on package %d", msg.MemberAddr, msg.PackageNonce)
+		return nil, errorsmod.Wrapf(sdkerrors.ErrUnauthorized, "member %s has already voted on deposit package %d", msg.MemberAddr, msg.PackageNonce)
 	}
 
 	switch msg.Action {
@@ -178,7 +186,12 @@ func (ms msgServer) DepositClaim(goCtx context.Context, msg *types.MsgDepositCla
 
 	trackedPackage.VotedMembers = append(trackedPackage.VotedMembers, msg.MemberAddr)
 
-	if err := ms.PendingPackages.Set(goCtx, pendingPackageKey, trackedPackage); err != nil {
+	// Advance the observed nonce so the next deposit can be claimed.
+	if err := ms.LastObservedDepositNonce.Set(goCtx, msg.ConnectionId, msg.PackageNonce); err != nil {
+		return nil, err
+	}
+
+	if err := ms.DepositPackages.Set(goCtx, packageKey, trackedPackage); err != nil {
 		return nil, err
 	}
 
@@ -191,25 +204,13 @@ func (ms msgServer) WithdrawClaim(goCtx context.Context, msg *types.MsgWithdrawC
 		return nil, errorsmod.Wrap(sdkerrors.ErrInvalidAddress, err.Error())
 	}
 
-	pendingPackageKey := collections.Join(msg.PackageNonce, msg.ConnectionId)
-	trackedPackage, err := ms.PendingPackages.Get(goCtx, pendingPackageKey)
+	packageKey := collections.Join(msg.PackageNonce, msg.ConnectionId)
+	trackedPackage, err := ms.WithdrawPackages.Get(goCtx, packageKey)
 	if err != nil {
 		return nil, err
 	}
 	if trackedPackage.PackageData == nil {
-		return nil, errorsmod.Wrapf(
-			sdkerrors.ErrInvalidRequest, "cannot find package with nonce %v for connection %s",
-			msg.PackageNonce,
-			msg.ConnectionId,
-		)
-	}
-	if trackedPackage.PackageData.ConnectionId != msg.ConnectionId {
-		return nil, errorsmod.Wrapf(
-			sdkerrors.ErrInvalidRequest,
-			"claim connection_id %s does not match package connection_id %s",
-			msg.ConnectionId,
-			trackedPackage.PackageData.ConnectionId,
-		)
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "cannot find withdraw package with nonce %d for connection %s", msg.PackageNonce, msg.ConnectionId)
 	}
 	if trackedPackage.PackageData.Action != types.PackageAction_PACKAGE_ACTION_WITHDRAW {
 		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "package %d is not a withdraw package", msg.PackageNonce)
@@ -224,7 +225,7 @@ func (ms msgServer) WithdrawClaim(goCtx context.Context, msg *types.MsgWithdrawC
 	}
 
 	if hasVoted(trackedPackage.VotedMembers, msg.MemberAddr) {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrUnauthorized, "member %s has already voted on package %d", msg.MemberAddr, msg.PackageNonce)
+		return nil, errorsmod.Wrapf(sdkerrors.ErrUnauthorized, "member %s has already voted on withdraw package %d", msg.MemberAddr, msg.PackageNonce)
 	}
 
 	switch msg.Action {
@@ -243,12 +244,12 @@ func (ms msgServer) WithdrawClaim(goCtx context.Context, msg *types.MsgWithdrawC
 		if err := ms.RefundEscrowedCoins(goCtx, senderAddr, sdk.Coins{refundCoin}); err != nil {
 			return nil, err
 		}
-		return &types.MsgWithdrawClaimResponse{}, ms.PendingPackages.Remove(goCtx, pendingPackageKey)
+		return &types.MsgWithdrawClaimResponse{}, ms.WithdrawPackages.Remove(goCtx, packageKey)
 	default:
 		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid claim action: %s", msg.Action.String())
 	}
 
-	if err := ms.PendingPackages.Set(goCtx, pendingPackageKey, trackedPackage); err != nil {
+	if err := ms.WithdrawPackages.Set(goCtx, packageKey, trackedPackage); err != nil {
 		return nil, err
 	}
 
