@@ -71,6 +71,9 @@ message TrackedPackage {
 
   // signatures are member signatures collected for the package.
   repeated bytes signatures = 4;
+
+  // voted_members tracks bech32 addresses of members who have already voted.
+  repeated string voted_members = 5;
 }
 
 // PackageStatus represents the lifecycle state of a stable-ramp package.

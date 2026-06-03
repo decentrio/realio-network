@@ -3,6 +3,7 @@ package types
 const (
 	EventTypeWithdraw             = "withdraw"
 	EventTypeWithdrawClaimConfirm = "withdraw_claim_confirm"
+	EventTypeDepositClaimConfirm  = "deposit_claim_confirm"
 
 	AttributeKeySender     = "sender"
 	AttributeKeyReceiver   = "receiver"
